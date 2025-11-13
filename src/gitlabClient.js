@@ -63,7 +63,7 @@ function parseMRUrl(input, projectArg = null) {
   );
 }
 
-async function getMergeRequestDiffs(
+async function getDiffs(
   mrUrl,
   projectArg = null,
   maxDiffChars = null,
@@ -157,7 +157,7 @@ async function getMergeRequestDiffs(
   }
 }
 
-async function postMRComment(mrUrl, commentBody, projectArg = null) {
+async function postComment(mrUrl, commentBody, projectArg = null) {
   const maxRetries = 3;
   const timeout = 30000; // 30 seconds
 
@@ -247,4 +247,4 @@ async function postMRComment(mrUrl, commentBody, projectArg = null) {
   }
 }
 
-module.exports = { getMergeRequestDiffs, postMRComment };
+module.exports = { getDiffs, postComment };
