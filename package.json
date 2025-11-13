@@ -1,6 +1,6 @@
 {
   "name": "mr-pilot",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AI code reviewer for GitLab MRs - Get instant feedback on bugs, quality, and requirements. Works with OpenAI, Ollama, Claude & more.",
   "main": "src/index.js",
   "bin": {
@@ -30,12 +30,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/mr-pilot.git"
+    "url": "https://github.com/javimosch/mr-pilot"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/mr-pilot/issues"
+    "url": "https://github.com/javimosch/mr-pilot"
   },
-  "homepage": "https://yourusername.github.io/mr-pilot",
+  "homepage": "https://javimosch.github.io/mr-pilot",
   "engines": {
     "node": ">=14.0.0"
   },
