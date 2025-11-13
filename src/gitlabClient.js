@@ -1,39 +1,67 @@
 const axios = require('axios');
 
-function parseMRUrl(input) {
+function parseMRUrl(input, projectArg = null) {
   if (!input) {
     throw new Error('MR URL or ID is required');
   }
 
-  // If it's just a number, treat it as MR IID (need project ID too)
-  if (/^\d+$/.test(input)) {
-    throw new Error('Please provide full MR URL, not just ID');
-  }
-
-  // Parse GitLab MR URL format: https://gitlab.domain/project/path/-/merge_requests/123
+  // Check if it's a full URL
   const urlPattern = /https?:\/\/([^\/]+)\/(.+?)\/-\/merge_requests\/(\d+)/;
-  const match = input.match(urlPattern);
+  const urlMatch = input.match(urlPattern);
 
-  if (!match) {
-    throw new Error('Invalid GitLab MR URL format. Expected: https://gitlab.domain/project/path/-/merge_requests/123');
+  if (urlMatch) {
+    // Full URL provided
+    const [, domain, projectPath, mrIid] = urlMatch;
+    const projectId = encodeURIComponent(projectPath);
+
+    return {
+      domain,
+      projectId,
+      mrIid,
+      apiBase: `https://${domain}/api/v4`
+    };
   }
 
-  const [, domain, projectPath, mrIid] = match;
-  
-  // URL encode the project path
-  const projectId = encodeURIComponent(projectPath);
+  // Check if it's just a number (MR ID)
+  if (/^\d+$/.test(input)) {
+    const mrIid = input;
+    
+    // Try to get project from argument or environment
+    const projectPath = projectArg || process.env.GITLAB_DEFAULT_PROJECT;
+    
+    if (!projectPath) {
+      throw new Error('MR ID provided without project path. Use --project flag or set GITLAB_DEFAULT_PROJECT in .env');
+    }
 
-  return {
-    domain,
-    projectId,
-    mrIid,
-    apiBase: `https://${domain}/api/v4`
-  };
+    // Get domain from GITLAB_API env variable
+    const gitlabApi = process.env.GITLAB_API;
+    if (!gitlabApi) {
+      throw new Error('GITLAB_API environment variable is not set');
+    }
+
+    // Extract domain from API URL (e.g., https://git.geored.fr/api/v4 -> git.geored.fr)
+    const apiUrlMatch = gitlabApi.match(/https?:\/\/([^\/]+)/);
+    if (!apiUrlMatch) {
+      throw new Error('Invalid GITLAB_API format in environment');
+    }
+
+    const domain = apiUrlMatch[1];
+    const projectId = encodeURIComponent(projectPath);
+
+    return {
+      domain,
+      projectId,
+      mrIid,
+      apiBase: gitlabApi
+    };
+  }
+
+  throw new Error('Invalid input format. Expected: MR URL, MR ID (with --project or GITLAB_DEFAULT_PROJECT), or MR ID alone if GITLAB_DEFAULT_PROJECT is set');
 }
 
-async function getMergeRequestDiffs(mrUrl) {
+async function getMergeRequestDiffs(mrUrl, projectArg = null) {
   try {
-    const { apiBase, projectId, mrIid } = parseMRUrl(mrUrl);
+    const { apiBase, projectId, mrIid } = parseMRUrl(mrUrl, projectArg);
     
     const token = process.env.GITLAB_TOKEN;
     if (!token) {
@@ -92,9 +120,9 @@ async function getMergeRequestDiffs(mrUrl) {
   }
 }
 
-async function postMRComment(mrUrl, commentBody) {
+async function postMRComment(mrUrl, commentBody, projectArg = null) {
   try {
-    const { apiBase, projectId, mrIid } = parseMRUrl(mrUrl);
+    const { apiBase, projectId, mrIid } = parseMRUrl(mrUrl, projectArg);
     
     const token = process.env.GITLAB_TOKEN;
     if (!token) {
