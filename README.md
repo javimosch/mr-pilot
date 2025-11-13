@@ -19,8 +19,9 @@ cp .env.example .env
    - `GITLAB_API`: Your GitLab API URL (e.g., https://git.geored.fr/api/v4)
    - `GITLAB_DEFAULT_PROJECT`: (Optional) Default project path for using MR ID only
    - `MAX_DIFF_CHARS`: (Optional) Maximum characters for diffs (default: 50000)
-   - `OPENROUTER_API_KEY`: Your OpenRouter API key
-   - `OPENROUTER_MODEL`: LLM model to use (default: anthropic/claude-3.5-sonnet)
+   - `LLM_PROVIDER`: LLM provider to use (openrouter, openai, ollama, azure)
+   - `LLM_API_KEY`: Your LLM API key (not needed for Ollama)
+   - `LLM_MODEL`: Model to use (e.g., openai/gpt-oss-120b:exacto, gpt-4o, llama3.1:8b)
 
 ## Usage
 
@@ -126,7 +127,7 @@ Large MRs may have their diffs truncated to fit within token limits. The tool he
    ```bash
    # Useful in CI/CD pipelines to ensure reviews are complete
    node src/index.js 1763 --fail-on-truncate
-   
+
    # Output when truncated:
    # ❌ Exiting: diff is truncated (--fail-on-truncate enabled)
    #    Run with the recommended --max-diff-chars to review all changes.
@@ -173,6 +174,49 @@ Example `guidelines.txt`:
 ```
 
 When provided, the AI will NOT flag these as issues, reducing noise in the review.
+
+## LLM Provider Configuration
+
+The tool supports multiple LLM providers. Configure via environment variables:
+
+### OpenRouter (default)
+```env
+LLM_PROVIDER=openrouter
+LLM_API_KEY=sk-or-v1-...
+LLM_MODEL=openai/gpt-oss-120b:exacto
+```
+
+### OpenAI
+```env
+LLM_PROVIDER=openai
+LLM_API_KEY=sk-...
+LLM_MODEL=gpt-4o
+```
+
+### Ollama (local)
+```env
+LLM_PROVIDER=ollama
+LLM_MODEL=llama3.1:8b
+# LLM_API_URL=http://localhost:11434/v1/chat/completions  # default
+```
+
+### Azure OpenAI
+```env
+LLM_PROVIDER=azure
+LLM_API_KEY=your_azure_key
+LLM_MODEL=gpt-4
+LLM_API_URL=https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2024-02-15-preview
+```
+
+### Custom OpenAI-compatible API
+```env
+LLM_PROVIDER=openai
+LLM_API_KEY=your_key
+LLM_MODEL=your-model
+LLM_API_URL=https://your-custom-endpoint.com/v1/chat/completions
+```
+
+**Note:** Legacy `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` variables are still supported for backward compatibility.
 
 ## Output
 
