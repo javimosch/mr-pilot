@@ -3,10 +3,10 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>MR Pilot - AI-Powered Code Review for GitLab</title>
+        <title>MR Pilot - AI-Powered Code Review for GitLab & GitHub</title>
         <meta
             name="description"
-            content="Automated code review tool for GitLab Merge Requests using AI. Get instant feedback on bugs, quality, and requirements. Works with OpenAI, Ollama, Claude & more."
+            content="Stop wasting time on manual code reviews. MR Pilot provides instant, AI-powered feedback on your GitLab Merge Requests and GitHub Pull Requests."
         />
         <script src="https://cdn.tailwindcss.com"></script>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -16,6 +16,9 @@
             rel="stylesheet"
         />
         <style>
+            html {
+                scroll-behavior: smooth;
+            }
             body {
                 font-family: "Inter", sans-serif;
             }
@@ -106,14 +109,17 @@
                     <h1
                         class="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6"
                     >
-                        AI-Powered Code Review<br />
-                        <span class="gradient-text">for GitLab</span>
+                        Stop Wasting Time on<br />
+                        <span class="gradient-text"
+                            >Manual Code Reviews</span
+                        >
                     </h1>
                     <p
                         class="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto"
                     >
-                        Get instant, thorough code reviews powered by AI.<br />
-                        Catch bugs, enforce standards, validate requirements.
+                        MR Pilot is an AI-powered code review bot for GitLab
+                        and GitHub. It provides instant, objective feedback so
+                        your team can stop waiting and start building.
                     </p>
                     <div
                         class="flex flex-col sm:flex-row gap-4 justify-center mb-12"
@@ -138,22 +144,15 @@
                         <div class="code-block shadow-2xl">
                             <code>
                                 <span class="text-gray-500"
-                                    ># Install globally</span
-                                >
-                                <span class="text-green-400">$</span> npm
-                                install -g mr-pilot
-
-                                <span class="text-gray-500"
-                                    ># Review a merge request with
-                                    requirements</span
+                                    ># Review a GitHub Pull Request</span
                                 >
                                 <span class="text-green-400">$</span> mr-pilot
-                                1763 -i requirements.txt --comment
+                                https://github.com/owner/repo/pull/123 --comment
 
                                 <span class="text-blue-400">✓</span> Retrieved
-                                MR:
+                                GitHub PR:
                                 <span class="text-yellow-300"
-                                    >"Add user authentication"</span
+                                    >"feat: Add user authentication"</span
                                 >
                                 <span class="text-blue-400">✓</span> Analysis
                                 complete
@@ -165,7 +164,7 @@
                                 <span class="text-white font-bold"
                                     >Quality Score:</span
                                 >
-                                <span class="text-green-400">85/100</span>
+                                <span class="text-green-400">92/100</span>
                             </code>
                         </div>
                     </div>
@@ -173,8 +172,112 @@
             </div>
         </section>
 
+        <!-- Pain and Dream Section -->
+        <section class="py-20 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid md:grid-cols-2 gap-16 items-center">
+                    <div>
+                        <h2
+                            class="text-3xl font-bold text-gray-500 mb-6"
+                        >
+                            The Old Way: Manual Reviews
+                        </h2>
+                        <ul class="space-y-4 text-lg text-gray-600">
+                            <li class="flex items-start">
+                                <span class="text-red-500 mr-3 mt-1">❌</span
+                                ><span
+                                    ><strong
+                                        >Slow & Time-Consuming:</strong
+                                    >
+                                    Senior devs spend hours on routine checks,
+                                    creating bottlenecks.</span
+                                >
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-red-500 mr-3 mt-1">❌</span
+                                ><span
+                                    ><strong
+                                        >Inconsistent & Subjective:</strong
+                                    >
+                                    Review quality depends entirely on the
+                                    reviewer's mood, workload, and
+                                    expertise.</span
+                                >
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-red-500 mr-3 mt-1">❌</span
+                                ><span
+                                    ><strong>Scope Creep:</strong> Hard to
+                                    verify that changes strictly align with the
+                                    original ticket requirements.</span
+                                >
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-red-500 mr-3 mt-1">❌</span
+                                ><span
+                                    ><strong
+                                        >Repetitive Feedback:</strong
+                                    >
+                                    Constantly pointing out the same minor style
+                                    or convention issues.</span
+                                >
+                            </li>
+                        </ul>
+                    </div>
+                    <div
+                        class="bg-gradient-to-br from-purple-50 via-white to-indigo-50 p-8 rounded-xl border-2 border-purple-100"
+                    >
+                        <h2 class="text-3xl font-bold text-gray-800 mb-6">
+                            The New Way:
+                            <span class="gradient-text">AI-Powered</span>
+                        </h2>
+                        <ul class="space-y-4 text-lg text-gray-700">
+                            <li class="flex items-start">
+                                <span class="text-green-500 mr-3 mt-1">✅</span
+                                ><span
+                                    ><strong>Instant Feedback:</strong> Get a
+                                    thorough, objective review in minutes, not
+                                    hours.</span
+                                >
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-green-500 mr-3 mt-1">✅</span
+                                ><span
+                                    ><strong
+                                        >Objective & Consistent:</strong
+                                    >
+                                    Every review is held to the same high
+                                    standard, every time.</span
+                                >
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-green-500 mr-3 mt-1">✅</span
+                                ><span
+                                    ><strong
+                                        >Requirement-Focused:</strong
+                                    >
+                                    Validates that code changes meet the goals
+                                    of the feature or bug fix.</span
+                                >
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-green-500 mr-3 mt-1">✅</span
+                                ><span
+                                    ><strong
+                                        >Frees Up Your Team:</strong
+                                    >
+                                    Let AI handle the routine checks, so senior
+                                    devs can focus on architecture.</span
+                                >
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Features Section -->
-        <section id="features" class="py-20 bg-white">
+        <section id="features" class="py-20 bg-gray-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-16">
                     <h2 class="text-4xl font-bold text-gray-900 mb-4">
@@ -192,11 +295,12 @@
                     >
                         <div class="text-5xl mb-4">🎯</div>
                         <h3 class="text-xl font-bold text-gray-900 mb-3">
-                            Focused Reviews
+                            Context-Aware Reviews
                         </h3>
                         <p class="text-gray-600">
-                            Reviews only changes related to ticket requirements.
-                            Ignores unrelated commits from branch merges.
+                            Provide ticket requirements to ensure code changes
+                            align with the original goal, ignoring unrelated
+                            commits.
                         </p>
                     </div>
 
@@ -204,13 +308,13 @@
                     <div
                         class="feature-card bg-white p-8 rounded-xl shadow-md border border-gray-100"
                     >
-                        <div class="text-5xl mb-4">🔧</div>
+                        <div class="text-5xl mb-4">🤝</div>
                         <h3 class="text-xl font-bold text-gray-900 mb-3">
-                            Multiple Providers
+                            GitLab & GitHub Support
                         </h3>
                         <p class="text-gray-600">
-                            Works with OpenRouter, OpenAI, Ollama, Azure, and
-                            any OpenAI-compatible API.
+                            Works seamlessly with both GitLab Merge Requests and
+                            GitHub Pull Requests.
                         </p>
                     </div>
 
@@ -224,7 +328,7 @@
                         </h3>
                         <p class="text-gray-600">
                             Get reviews in seconds. Perfect for CI/CD pipelines
-                            with automatic retry logic.
+                            with automatic retry logic for reliability.
                         </p>
                     </div>
 
@@ -238,7 +342,7 @@
                         </h3>
                         <p class="text-gray-600">
                             Provide project conventions to reduce false
-                            positives and get relevant feedback only.
+                            positives and get truly relevant feedback.
                         </p>
                     </div>
 
@@ -246,13 +350,13 @@
                     <div
                         class="feature-card bg-white p-8 rounded-xl shadow-md border border-gray-100"
                     >
-                        <div class="text-5xl mb-4">🎨</div>
+                        <div class="text-5xl mb-4">🔧</div>
                         <h3 class="text-xl font-bold text-gray-900 mb-3">
-                            Customizable
+                            Multi-Provider
                         </h3>
                         <p class="text-gray-600">
-                            Configure scoring thresholds, custom rules, and
-                            tailor reviews to your team's needs.
+                            Works with OpenRouter, OpenAI, Ollama, Azure, and
+                            any OpenAI-compatible API.
                         </p>
                     </div>
 
@@ -265,8 +369,8 @@
                             Cost Effective
                         </h3>
                         <p class="text-gray-600">
-                            Use free local models with Ollama or pay-per-use
-                            with OpenRouter. You choose.
+                            Use free local models with Ollama or access 200+
+                            models with OpenRouter's pay-per-use billing.
                         </p>
                     </div>
                 </div>
@@ -274,7 +378,7 @@
         </section>
 
         <!-- Quick Start Section -->
-        <section id="quick-start" class="py-20 bg-gray-50">
+        <section id="quick-start" class="py-20 bg-white">
             <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-12">
                     <h2 class="text-4xl font-bold text-gray-900 mb-4">
@@ -287,7 +391,7 @@
 
                 <div class="space-y-8">
                     <!-- Step 1 -->
-                    <div class="bg-white p-8 rounded-xl shadow-md">
+                    <div class="bg-gray-50 p-8 rounded-xl shadow-inner">
                         <div class="flex items-start">
                             <div
                                 class="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg flex items-center justify-center text-xl font-bold"
@@ -308,7 +412,7 @@
                     </div>
 
                     <!-- Step 2 -->
-                    <div class="bg-white p-8 rounded-xl shadow-md">
+                    <div class="bg-gray-50 p-8 rounded-xl shadow-inner">
                         <div class="flex items-start">
                             <div
                                 class="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg flex items-center justify-center text-xl font-bold"
@@ -324,11 +428,12 @@
                                 <div class="code-block">
                                     <code>
                                         <span class="text-gray-500"
-                                            ># Create .env file</span
+                                            ># Create .env file and add your
+                                            tokens</span
                                         >
-                                        GITLAB_TOKEN=<span
+                                        GITHUB_TOKEN=<span
                                             class="text-yellow-300"
-                                            >your_gitlab_token</span
+                                            >your_github_token</span
                                         >
                                         LLM_API_KEY=<span
                                             class="text-yellow-300"
@@ -345,7 +450,7 @@
                     </div>
 
                     <!-- Step 3 -->
-                    <div class="bg-white p-8 rounded-xl shadow-md">
+                    <div class="bg-gray-50 p-8 rounded-xl shadow-inner">
                         <div class="flex items-start">
                             <div
                                 class="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg flex items-center justify-center text-xl font-bold"
@@ -360,7 +465,8 @@
                                 </h3>
                                 <div class="code-block">
                                     <code
-                                        >mr-pilot 1763 -i requirements.txt
+                                        >mr-pilot
+                                        https://github.com/owner/repo/pull/123
                                         --comment</code
                                     >
                                 </div>
@@ -395,7 +501,7 @@
         </section>
 
         <!-- Providers Section -->
-        <section class="py-20 bg-white">
+        <section class="py-20 bg-gray-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-12">
                     <h2 class="text-4xl font-bold text-gray-900 mb-4">
@@ -406,101 +512,35 @@
                     </p>
                 </div>
 
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-8 items-center">
-                    <div class="text-center p-6 bg-gray-50 rounded-lg">
+                <div
+                    class="grid grid-cols-2 md:grid-cols-5 gap-8 items-center"
+                >
+                    <div class="text-center p-6 bg-white rounded-lg shadow-sm">
                         <div class="text-4xl mb-2">🌐</div>
                         <div class="font-semibold text-gray-800">
                             OpenRouter
                         </div>
                         <div class="text-sm text-gray-500">200+ models</div>
                     </div>
-                    <div class="text-center p-6 bg-gray-50 rounded-lg">
+                    <div class="text-center p-6 bg-white rounded-lg shadow-sm">
                         <div class="text-4xl mb-2">🤖</div>
                         <div class="font-semibold text-gray-800">OpenAI</div>
                         <div class="text-sm text-gray-500">GPT-4, GPT-3.5</div>
                     </div>
-                    <div class="text-center p-6 bg-gray-50 rounded-lg">
+                    <div class="text-center p-6 bg-white rounded-lg shadow-sm">
                         <div class="text-4xl mb-2">🦙</div>
                         <div class="font-semibold text-gray-800">Ollama</div>
                         <div class="text-sm text-gray-500">Free & Local</div>
                     </div>
-                    <div class="text-center p-6 bg-gray-50 rounded-lg">
+                    <div class="text-center p-6 bg-white rounded-lg shadow-sm">
                         <div class="text-4xl mb-2">☁️</div>
                         <div class="font-semibold text-gray-800">Azure</div>
                         <div class="text-sm text-gray-500">Enterprise</div>
                     </div>
-                    <div class="text-center p-6 bg-gray-50 rounded-lg">
+                    <div class="text-center p-6 bg-white rounded-lg shadow-sm">
                         <div class="text-4xl mb-2">🔧</div>
                         <div class="font-semibold text-gray-800">Custom</div>
                         <div class="text-sm text-gray-500">Any API</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Examples Section -->
-        <section class="py-20 bg-gray-50">
-            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="text-center mb-12">
-                    <h2 class="text-4xl font-bold text-gray-900 mb-4">
-                        Real-World Examples
-                    </h2>
-                    <p class="text-xl text-gray-600">
-                        See how teams are using MR Pilot
-                    </p>
-                </div>
-
-                <div class="space-y-6">
-                    <div class="code-block shadow-lg">
-                        <code>
-                            <span class="text-gray-500"
-                                ># Review with ticket requirements</span
-                            >
-                            <span class="text-green-400">$</span> mr-pilot 1763
-                            -i ticket.txt
-                        </code>
-                    </div>
-
-                    <div class="code-block shadow-lg">
-                        <code>
-                            <span class="text-gray-500"
-                                ># With project guidelines to reduce false
-                                positives</span
-                            >
-                            <span class="text-green-400">$</span> mr-pilot 1763
-                            -i spec.txt -g guidelines.txt
-                        </code>
-                    </div>
-
-                    <div class="code-block shadow-lg">
-                        <code>
-                            <span class="text-gray-500"
-                                ># Post results as comment on MR</span
-                            >
-                            <span class="text-green-400">$</span> mr-pilot 1763
-                            -i spec.txt --comment
-                        </code>
-                    </div>
-
-                    <div class="code-block shadow-lg">
-                        <code>
-                            <span class="text-gray-500"
-                                ># Use local Ollama (completely free!)</span
-                            >
-                            <span class="text-green-400">$</span>
-                            LLM_PROVIDER=ollama mr-pilot 1763
-                        </code>
-                    </div>
-
-                    <div class="code-block shadow-lg">
-                        <code>
-                            <span class="text-gray-500"
-                                ># CI/CD integration - fail if diff
-                                truncated</span
-                            >
-                            <span class="text-green-400">$</span> mr-pilot
-                            $CI_MERGE_REQUEST_IID --fail-on-truncate --comment
-                        </code>
                     </div>
                 </div>
             </div>
@@ -548,7 +588,7 @@
                             >
                         </div>
                         <p class="text-gray-400">
-                            AI-powered code review for GitLab Merge Requests
+                            AI-powered code review for GitLab & GitHub.
                         </p>
                     </div>
                     <div>
