@@ -59,7 +59,7 @@ function parseMRUrl(input, projectArg = null) {
   throw new Error('Invalid input format. Expected: MR URL, MR ID (with --project or GITLAB_DEFAULT_PROJECT), or MR ID alone if GITLAB_DEFAULT_PROJECT is set');
 }
 
-async function getMergeRequestDiffs(mrUrl, projectArg = null) {
+async function getMergeRequestDiffs(mrUrl, projectArg = null, maxDiffChars = null) {
   try {
     const { apiBase, projectId, mrIid } = parseMRUrl(mrUrl, projectArg);
     
@@ -84,6 +84,8 @@ async function getMergeRequestDiffs(mrUrl, projectArg = null) {
     
     // Format diffs
     let diffsText = '';
+    let truncatedFiles = 0;
+    
     if (mr.changes && mr.changes.length > 0) {
       diffsText = mr.changes.map(change => {
         const filePath = change.new_path || change.old_path;
@@ -91,10 +93,18 @@ async function getMergeRequestDiffs(mrUrl, projectArg = null) {
       }).join('\n');
     }
 
-    // Limit diff size for POC
-    const MAX_DIFF_LENGTH = 15000;
+    const originalLength = diffsText.length;
+    const MAX_DIFF_LENGTH = maxDiffChars || parseInt(process.env.MAX_DIFF_CHARS) || 50000;
+    
+    let wasTruncated = false;
     if (diffsText.length > MAX_DIFF_LENGTH) {
-      diffsText = diffsText.substring(0, MAX_DIFF_LENGTH) + '\n\n[... diff truncated due to size ...]';
+      wasTruncated = true;
+      // Count how many files we're losing
+      truncatedFiles = (diffsText.match(/### File:/g) || []).length - (diffsText.substring(0, MAX_DIFF_LENGTH).match(/### File:/g) || []).length;
+      
+      diffsText = diffsText.substring(0, MAX_DIFF_LENGTH) + 
+        `\n\n⚠️ [DIFF TRUNCATED: ${truncatedFiles} files not shown due to size limit. Original: ${originalLength} chars, showing: ${MAX_DIFF_LENGTH} chars]\n` +
+        `💡 To review all changes, use: --max-diff-chars ${originalLength + 1000}`;
     }
 
     return {
@@ -103,7 +113,14 @@ async function getMergeRequestDiffs(mrUrl, projectArg = null) {
       sourceBranch: mr.source_branch,
       targetBranch: mr.target_branch,
       changedFiles: mr.changes?.length || 0,
-      diffs: diffsText
+      diffs: diffsText,
+      diffStats: {
+        originalLength,
+        truncatedLength: wasTruncated ? MAX_DIFF_LENGTH : originalLength,
+        wasTruncated,
+        truncatedFiles,
+        recommendedMaxChars: originalLength + 1000
+      }
     };
 
   } catch (error) {

@@ -18,6 +18,7 @@ cp .env.example .env
    - `GITLAB_TOKEN`: Your GitLab personal access token (with `api` scope)
    - `GITLAB_API`: Your GitLab API URL (e.g., https://git.geored.fr/api/v4)
    - `GITLAB_DEFAULT_PROJECT`: (Optional) Default project path for using MR ID only
+   - `MAX_DIFF_CHARS`: (Optional) Maximum characters for diffs (default: 50000)
    - `OPENROUTER_API_KEY`: Your OpenRouter API key
    - `OPENROUTER_MODEL`: LLM model to use (default: anthropic/claude-3.5-sonnet)
 
@@ -58,9 +59,27 @@ node src/index.js 1763 --comment
 node src/index.js 1763 -c
 ```
 
+### Debug mode (see what's sent to LLM):
+```bash
+node src/index.js 1763 -i input.txt --debug
+# or
+node src/index.js 1763 -i input.txt -d
+```
+
+### Increase diff size limit for large MRs:
+```bash
+# First run shows: "For complete review, use: --max-diff-chars 75000"
+node src/index.js 1763
+
+# Then run with recommended size
+node src/index.js 1763 --max-diff-chars 75000
+# or
+node src/index.js 1763 -m 75000
+```
+
 ### Combine all options:
 ```bash
-node src/index.js 1763 -p RD_soft/simpliciti-frontend/geored-v3 -i input.txt --comment
+node src/index.js 1763 -p RD_soft/simpliciti-frontend/geored-v3 -i input.txt -m 100000 --comment --debug
 ```
 
 ## Options
@@ -68,6 +87,55 @@ node src/index.js 1763 -p RD_soft/simpliciti-frontend/geored-v3 -i input.txt --c
 - `--comment`, `-c`: Post the review as a comment on the GitLab MR
 - `--input-file <path>`, `-i <path>`: Path to a file containing ticket/requirement specification
 - `--project <path>`, `-p <path>`: GitLab project path (e.g., group/subgroup/project)
+- `--max-diff-chars <number>`, `-m <number>`: Maximum characters for diffs (overrides MAX_DIFF_CHARS in .env)
+- `--fail-on-truncate`: Exit with error if diff is truncated (useful for CI/CD to enforce complete reviews)
+- `--debug`, `-d`: Show detailed debug information (prompt sent to LLM, raw response, etc.)
+
+## Diff Size Management
+
+Large MRs may have their diffs truncated to fit within token limits. The tool helps you handle this:
+
+1. **First run**: Shows if truncation occurred and recommends the exact size needed
+   ```
+   ⚠️  DIFF TRUNCATED
+      Original size: 72,580 chars
+      Showing: 50,000 chars
+      Files hidden: 16
+      💡 For complete review, use: --max-diff-chars 73580
+   ```
+
+2. **Re-run with recommended size**: Get a complete review
+   ```bash
+   node src/index.js 1763 --max-diff-chars 73580
+   ```
+
+3. **Set default in .env** (optional): Avoid specifying each time
+   ```env
+   MAX_DIFF_CHARS=100000
+   ```
+
+4. **Fail on truncation** (CI/CD): Exit with error code 1 if diff is incomplete
+   ```bash
+   # Useful in CI/CD pipelines to ensure reviews are complete
+   node src/index.js 1763 --fail-on-truncate
+   
+   # Output when truncated:
+   # ❌ Exiting: diff is truncated (--fail-on-truncate enabled)
+   #    Run with the recommended --max-diff-chars to review all changes.
+   # Exit code: 1
+   ```
+
+## Debug Mode
+
+When using `--debug`, the tool will display:
+- 📋 Full ticket specification content
+- 📊 MR metadata (title, description, branches, file count)
+- 🤖 Complete prompt sent to the LLM
+- 📏 Character counts for each section
+- 💬 Raw LLM response before parsing
+- 💬 Comment body that will be posted (if using --comment)
+
+This helps you understand what context the AI is working with and verify the quality of the analysis.
 
 ## Input File Format
 

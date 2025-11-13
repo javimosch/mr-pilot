@@ -3,13 +3,27 @@ function printResult(jsonString) {
     // Try to extract JSON from markdown code blocks if present
     let cleanJson = jsonString.trim();
     
-    // Remove markdown code blocks
+    // Remove markdown code blocks more robustly
     if (cleanJson.startsWith('```json')) {
-      cleanJson = cleanJson.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      // Find the last closing ``` to handle code blocks within JSON content
+      const firstNewline = cleanJson.indexOf('\n');
+      const lastTripleBacktick = cleanJson.lastIndexOf('```');
+      if (firstNewline !== -1 && lastTripleBacktick > firstNewline) {
+        cleanJson = cleanJson.substring(firstNewline + 1, lastTripleBacktick);
+      } else {
+        cleanJson = cleanJson.replace(/```json\n?/g, '').replace(/```\n?$/g, '');
+      }
     } else if (cleanJson.startsWith('```')) {
-      cleanJson = cleanJson.replace(/```\n?/g, '');
+      const firstNewline = cleanJson.indexOf('\n');
+      const lastTripleBacktick = cleanJson.lastIndexOf('```');
+      if (firstNewline !== -1 && lastTripleBacktick > firstNewline) {
+        cleanJson = cleanJson.substring(firstNewline + 1, lastTripleBacktick);
+      } else {
+        cleanJson = cleanJson.replace(/```\n?/g, '');
+      }
     }
 
+    cleanJson = cleanJson.trim();
     const result = JSON.parse(cleanJson);
 
     console.log('\n' + '='.repeat(50));
