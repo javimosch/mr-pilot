@@ -46,4 +46,28 @@ function printResult(jsonString) {
   }
 }
 
-module.exports = { printResult };
+function formatCommentBody(result) {
+  let comment = '## 🤖 AI Code Review\n\n';
+  
+  comment += `**Goal Status:** ${result.goal_status.toUpperCase()}\n`;
+  comment += `**Quality Score:** ${result.score}/100\n\n`;
+
+  if (result.errors && result.errors.length > 0) {
+    comment += '### ⚠️ Potential Issues\n\n';
+    result.errors.forEach((error, idx) => {
+      comment += `${idx + 1}. ${error}\n`;
+    });
+    comment += '\n';
+  } else {
+    comment += '### ✅ No issues found\n\n';
+  }
+
+  comment += '### 📝 Remarks\n\n';
+  comment += `${result.remarks}\n\n`;
+  comment += '---\n';
+  comment += '*Generated automatically by GitLab MR Review Bot*';
+
+  return comment;
+}
+
+module.exports = { printResult, formatCommentBody };

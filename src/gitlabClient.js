@@ -92,4 +92,42 @@ async function getMergeRequestDiffs(mrUrl) {
   }
 }
 
-module.exports = { getMergeRequestDiffs };
+async function postMRComment(mrUrl, commentBody) {
+  try {
+    const { apiBase, projectId, mrIid } = parseMRUrl(mrUrl);
+    
+    const token = process.env.GITLAB_TOKEN;
+    if (!token) {
+      throw new Error('GITLAB_TOKEN environment variable is not set');
+    }
+
+    const headers = {
+      'PRIVATE-TOKEN': token,
+      'Content-Type': 'application/json'
+    };
+
+    console.log('Posting comment to MR...');
+
+    await axios.post(
+      `${apiBase}/projects/${projectId}/merge_requests/${mrIid}/notes`,
+      { body: commentBody },
+      { headers }
+    );
+
+    console.log('✓ Comment posted successfully\n');
+
+  } catch (error) {
+    if (error.response) {
+      if (error.response.status === 404) {
+        throw new Error('MR not found. Cannot post comment.');
+      } else if (error.response.status === 401 || error.response.status === 403) {
+        throw new Error('Authentication failed or insufficient permissions to post comments.');
+      } else {
+        throw new Error(`GitLab API error: ${error.response.status} - ${error.response.statusText}`);
+      }
+    }
+    throw error;
+  }
+}
+
+module.exports = { getMergeRequestDiffs, postMRComment };

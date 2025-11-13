@@ -1,17 +1,20 @@
 require('dotenv').config();
-const { getMergeRequestDiffs } = require('./gitlabClient');
+const { getMergeRequestDiffs, postMRComment } = require('./gitlabClient');
 const { buildPrompt } = require('./promptBuilder');
 const { analyzeMR } = require('./openrouterClient');
-const { printResult } = require('./outputFormatter');
+const { printResult, formatCommentBody } = require('./outputFormatter');
 
 async function main() {
   try {
     // Parse command line arguments
-    const mrUrl = process.argv[2];
+    const args = process.argv.slice(2);
+    const mrUrl = args[0];
+    const shouldComment = args.includes('--comment') || args.includes('-c');
 
     if (!mrUrl) {
-      console.error('Usage: node src/index.js <gitlab_mr_url>');
+      console.error('Usage: node src/index.js <gitlab_mr_url> [--comment|-c]');
       console.error('Example: node src/index.js https://git.geored.fr/RD_soft/simpliciti-frontend/geored-v3/-/merge_requests/1763');
+      console.error('Example with comment: node src/index.js https://git.geored.fr/RD_soft/simpliciti-frontend/geored-v3/-/merge_requests/1763 --comment');
       process.exit(1);
     }
 
@@ -30,7 +33,13 @@ async function main() {
     console.log('✓ Analysis complete\n');
 
     // Step 4: Parse and display results
-    printResult(response);
+    const result = printResult(response);
+
+    // Step 5: Post comment if requested
+    if (shouldComment) {
+      const commentBody = formatCommentBody(result);
+      await postMRComment(mrUrl, commentBody);
+    }
 
   } catch (error) {
     console.error('\n❌ Error:', error.message);
