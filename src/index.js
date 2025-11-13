@@ -22,6 +22,13 @@ async function main() {
       inputFilePath = args[inputFileIndex + 1];
     }
 
+    // Find guidelines file argument
+    const guidelinesFileIndex = args.findIndex(arg => arg === '--guidelines-file' || arg === '-g');
+    let guidelinesFilePath = null;
+    if (guidelinesFileIndex !== -1 && args[guidelinesFileIndex + 1]) {
+      guidelinesFilePath = args[guidelinesFileIndex + 1];
+    }
+
     // Find project argument
     const projectIndex = args.findIndex(arg => arg === '--project' || arg === '-p');
     let projectPath = null;
@@ -45,6 +52,7 @@ async function main() {
       console.error('Options:');
       console.error('  --comment, -c                    Post review as comment on the MR');
       console.error('  --input-file, -i <path>          Path to ticket/requirement specification file');
+      console.error('  --guidelines-file, -g <path>     Path to project guidelines file (reduces false positives)');
       console.error('  --project, -p <path>             GitLab project path (e.g., group/subgroup/project)');
       console.error('  --max-diff-chars, -m <number>    Maximum characters for diffs (default: 50000)');
       console.error('  --fail-on-truncate               Exit with error if diff is truncated (no LLM call)');
@@ -71,6 +79,9 @@ async function main() {
       console.error('');
       console.error('  # Exit if diff is truncated (useful in CI/CD)');
       console.error('  node src/index.js 1763 --fail-on-truncate');
+      console.error('');
+      console.error('  # With guidelines to reduce false positives');
+      console.error('  node src/index.js 1763 -i input.txt -g guidelines.txt');
       process.exit(1);
     }
 
@@ -93,6 +104,26 @@ async function main() {
         }
       } catch (error) {
         throw new Error(`Failed to read input file '${inputFilePath}': ${error.message}`);
+      }
+    }
+
+    // Step 1b: Read guidelines file if provided
+    let guidelines = null;
+    if (guidelinesFilePath) {
+      try {
+        const resolvedPath = path.resolve(guidelinesFilePath);
+        guidelines = fs.readFileSync(resolvedPath, 'utf-8');
+        console.log(`✓ Loaded project guidelines from: ${guidelinesFilePath}\n`);
+        
+        if (debugMode) {
+          console.log('📖 DEBUG - Project Guidelines:');
+          console.log('─'.repeat(80));
+          console.log(guidelines);
+          console.log('─'.repeat(80));
+          console.log();
+        }
+      } catch (error) {
+        throw new Error(`Failed to read guidelines file '${guidelinesFilePath}': ${error.message}`);
       }
     }
 
@@ -132,7 +163,7 @@ async function main() {
     }
 
     // Step 3: Build prompt for LLM
-    const prompt = buildPrompt({ ...mrData, ticketScope });
+    const prompt = buildPrompt({ ...mrData, ticketScope, guidelines });
 
     if (debugMode) {
       console.log('🤖 DEBUG - Full Prompt Sent to LLM:');

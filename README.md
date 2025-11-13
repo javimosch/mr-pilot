@@ -52,6 +52,13 @@ node src/index.js 1763 --input-file input.txt
 node src/index.js 1763 -i input.txt
 ```
 
+### With project guidelines (reduces false positives):
+```bash
+node src/index.js 1763 -i input.txt --guidelines-file guidelines.txt
+# or
+node src/index.js 1763 -i input.txt -g guidelines.txt
+```
+
 ### Post review as comment on MR:
 ```bash
 node src/index.js 1763 --comment
@@ -86,6 +93,7 @@ node src/index.js 1763 -p RD_soft/simpliciti-frontend/geored-v3 -i input.txt -m 
 
 - `--comment`, `-c`: Post the review as a comment on the GitLab MR
 - `--input-file <path>`, `-i <path>`: Path to a file containing ticket/requirement specification
+- `--guidelines-file <path>`, `-g <path>`: Path to project guidelines file (helps reduce false positives)
 - `--project <path>`, `-p <path>`: GitLab project path (e.g., group/subgroup/project)
 - `--max-diff-chars <number>`, `-m <number>`: Maximum characters for diffs (overrides MAX_DIFF_CHARS in .env)
 - `--fail-on-truncate`: Exit with error if diff is truncated (useful for CI/CD to enforce complete reviews)
@@ -141,6 +149,8 @@ This helps you understand what context the AI is working with and verify the qua
 
 The input file should contain the ticket scope, requirements, or specification that the MR is supposed to implement. This helps the AI evaluate whether the code changes meet the stated goals.
 
+**Important:** When an input file is provided, the AI will ONLY review changes related to those requirements. This helps ignore unrelated commits that may be present due to branch merges.
+
 Example `input.txt`:
 ```
 Feature: Add user authentication
@@ -149,6 +159,20 @@ Feature: Add user authentication
 - Include logout functionality
 - Add session management
 ```
+
+## Guidelines File Format
+
+The guidelines file helps reduce false positives by informing the AI about project-specific conventions and configurations.
+
+Example `guidelines.txt`:
+```
+1. console logs (any type) are automatically disabled in production.
+2. VITE_ envs are normalized so it can be specified in camelCase (works out of the box)
+3. Unit tests are handled by a separate CI pipeline, not required in every MR
+4. TypeScript strict mode is not enabled project-wide
+```
+
+When provided, the AI will NOT flag these as issues, reducing noise in the review.
 
 ## Output
 
