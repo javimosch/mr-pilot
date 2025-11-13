@@ -112,15 +112,28 @@ async function getDiffs(
     let wasTruncated = false;
     if (diffsText.length > MAX_DIFF_LENGTH) {
       wasTruncated = true;
+      
+      // Find the last complete file before MAX_DIFF_LENGTH
+      const beforeLimit = diffsText.substring(0, MAX_DIFF_LENGTH);
+      const lastFileMarker = beforeLimit.lastIndexOf('\n### File:');
+      
+      let truncatedDiff;
+      if (lastFileMarker > 0) {
+        // Truncate at the last complete file
+        truncatedDiff = diffsText.substring(0, lastFileMarker);
+      } else {
+        // If no complete file fits, just use the limit
+        truncatedDiff = beforeLimit;
+      }
+      
       // Count how many files we're losing
       truncatedFiles =
         (diffsText.match(/### File:/g) || []).length -
-        (diffsText.substring(0, MAX_DIFF_LENGTH).match(/### File:/g) || [])
-          .length;
+        (truncatedDiff.match(/### File:/g) || []).length;
 
       diffsText =
-        diffsText.substring(0, MAX_DIFF_LENGTH) +
-        `\n\n⚠️ [DIFF TRUNCATED: ${truncatedFiles} files not shown due to size limit. Original: ${originalLength} chars, showing: ${MAX_DIFF_LENGTH} chars]\n` +
+        truncatedDiff +
+        `\n\n⚠️ [DIFF TRUNCATED: ${truncatedFiles} files not shown due to size limit. Original: ${originalLength} chars, showing: ${truncatedDiff.length} chars]\n` +
         `💡 To review all changes, use: --max-diff-chars ${originalLength + 1000}`;
     }
 
