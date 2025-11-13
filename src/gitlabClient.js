@@ -138,40 +138,80 @@ async function getMergeRequestDiffs(mrUrl, projectArg = null, maxDiffChars = nul
 }
 
 async function postMRComment(mrUrl, commentBody, projectArg = null) {
-  try {
-    const { apiBase, projectId, mrIid } = parseMRUrl(mrUrl, projectArg);
-    
-    const token = process.env.GITLAB_TOKEN;
-    if (!token) {
-      throw new Error('GITLAB_TOKEN environment variable is not set');
-    }
-
-    const headers = {
-      'PRIVATE-TOKEN': token,
-      'Content-Type': 'application/json'
-    };
-
-    console.log('Posting comment to MR...');
-
-    await axios.post(
-      `${apiBase}/projects/${projectId}/merge_requests/${mrIid}/notes`,
-      { body: commentBody },
-      { headers }
-    );
-
-    console.log('✓ Comment posted successfully\n');
-
-  } catch (error) {
-    if (error.response) {
-      if (error.response.status === 404) {
-        throw new Error('MR not found. Cannot post comment.');
-      } else if (error.response.status === 401 || error.response.status === 403) {
-        throw new Error('Authentication failed or insufficient permissions to post comments.');
-      } else {
-        throw new Error(`GitLab API error: ${error.response.status} - ${error.response.statusText}`);
+  const maxRetries = 3;
+  const timeout = 30000; // 30 seconds
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const { apiBase, projectId, mrIid } = parseMRUrl(mrUrl, projectArg);
+      
+      const token = process.env.GITLAB_TOKEN;
+      if (!token) {
+        throw new Error('GITLAB_TOKEN environment variable is not set');
       }
+
+      const headers = {
+        'PRIVATE-TOKEN': token,
+        'Content-Type': 'application/json'
+      };
+
+      if (attempt === 1) {
+        console.log('Posting comment to MR...');
+      } else {
+        console.log(`Retrying... (attempt ${attempt}/${maxRetries})`);
+      }
+
+      await axios.post(
+        `${apiBase}/projects/${projectId}/merge_requests/${mrIid}/notes`,
+        { body: commentBody },
+        { 
+          headers,
+          timeout: timeout
+        }
+      );
+
+      console.log('✓ Comment posted successfully\n');
+      return; // Success, exit function
+
+    } catch (error) {
+      const isLastAttempt = attempt === maxRetries;
+      
+      // Check if it's a timeout or network error
+      if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+        if (isLastAttempt) {
+          throw new Error(`Failed to post comment after ${maxRetries} attempts: Request timeout`);
+        }
+        console.log(`⚠️  Request timed out, retrying in 2 seconds...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        continue;
+      }
+      
+      // Check HTTP errors
+      if (error.response) {
+        if (error.response.status === 404) {
+          throw new Error('MR not found. Cannot post comment.');
+        } else if (error.response.status === 401 || error.response.status === 403) {
+          throw new Error('Authentication failed or insufficient permissions to post comments.');
+        } else if (error.response.status >= 500) {
+          // Server error - retry
+          if (isLastAttempt) {
+            throw new Error(`GitLab server error after ${maxRetries} attempts: ${error.response.status} - ${error.response.statusText}`);
+          }
+          console.log(`⚠️  Server error (${error.response.status}), retrying in 2 seconds...`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          continue;
+        } else {
+          throw new Error(`GitLab API error: ${error.response.status} - ${error.response.statusText}`);
+        }
+      }
+      
+      // Unknown error
+      if (isLastAttempt) {
+        throw error;
+      }
+      console.log(`⚠️  Error: ${error.message}, retrying in 2 seconds...`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
-    throw error;
   }
 }
 

@@ -227,3 +227,28 @@ The tool provides:
 - Quality score (0-100)
 
 With `--comment` flag, this same output is posted as a formatted comment on the MR.
+
+## Error Handling & Reliability
+
+The tool includes robust error handling:
+
+### Automatic Retries
+- **LLM requests**: Up to 3 attempts with 2-minute timeout per attempt
+- **GitLab API**: Up to 3 attempts with 30-second timeout per attempt
+- **Rate limits**: Exponential backoff (2s, 4s, 8s delays)
+- **Server errors (5xx)**: Automatic retry with 3-second delay
+
+### Timeout Protection
+If requests hang, the tool will:
+1. Wait for the configured timeout (30s for GitLab, 2min for LLM)
+2. Retry automatically (up to 3 times)
+3. Show clear error message if all attempts fail
+
+### What gets retried:
+- ✅ Timeouts
+- ✅ Network errors
+- ✅ Server errors (500, 502, 503, etc.)
+- ✅ Rate limits (429)
+- ❌ Authentication errors (401, 403)
+- ❌ Bad requests (400)
+- ❌ Not found (404)
