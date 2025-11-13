@@ -1,0 +1,48 @@
+# Development files
+.env
+.env.local
+.env.*.local
+node_modules/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test files
+test/
+tests/
+*.test.js
+*.spec.js
+coverage/
+
+# Documentation (except what's in files array)
+docs/
+publish.md
+idea.md
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Examples and test data
+input.txt
+guidelines.txt
+1767.txt
+
+# Misc
+*.md~
+.editorconfig

@@ -1,18 +1,55 @@
 {
-  "name": "gitlab-mr-review",
+  "name": "mr-pilot",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "AI code reviewer for GitLab MRs - Get instant feedback on bugs, quality, and requirements. Works with OpenAI, Ollama, Claude & more.",
+  "main": "src/index.js",
+  "bin": {
+    "mr-pilot": "./bin/mr-pilot.js"
+  },
   "scripts": {
     "start": "node src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "gitlab",
+    "merge-request",
+    "code-review",
+    "ai",
+    "llm",
+    "openai",
+    "ollama",
+    "claude",
+    "code-quality",
+    "automation",
+    "ci-cd",
+    "devops",
+    "openrouter",
+    "azure-openai"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/mr-pilot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/mr-pilot/issues"
+  },
+  "homepage": "https://yourusername.github.io/mr-pilot",
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "type": "commonjs",
   "dependencies": {
     "axios": "^1.13.2",
     "dotenv": "^17.2.3"
-  }
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "README.md",
+    "LICENSE",
+    "docs/LLM_PROVIDERS.md",
+    ".env.example"
+  ]
 }
