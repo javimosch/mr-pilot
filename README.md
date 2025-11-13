@@ -9,6 +9,11 @@ Automated code review tool that analyzes GitLab Merge Requests and GitHub Pull R
 npm install
 ```
 
+For development (includes testing tools):
+```bash
+npm install --include=dev
+```
+
 2. Create `.env` file (copy from `.env.example`):
 ```bash
 cp .env.example .env
@@ -67,7 +72,13 @@ node src/index.js https://github.com/owner/repo/pull/123
 node src/index.js 123
 ```
 
-**Note:** When using just a number without a URL, the tool defaults to GitLab unless you provide the `--project` flag with a GitHub repository format (`owner/repo`) or have `GITHUB_DEFAULT_REPO` set in your `.env` file.
+**Note:** When using just a number without a URL:
+- If the project path has 2 segments (e.g., `owner/repo` or `group/project`), it's ambiguous and you **must** use the `--platform` flag:
+  ```bash
+  node src/index.js 123 --project owner/repo --platform github
+  ```
+- If the project path has 3+ segments (e.g., `group/subgroup/project`), it's assumed to be GitLab.
+- If no project is specified, it defaults to GitLab.
 
 #### Using PR number with repository argument:
 ```bash
@@ -131,6 +142,7 @@ node src/index.js 1763 -p RD_soft/simpliciti-frontend/geored-v3 -i input.txt -m 
 - `--project <path>`, `-p <path>`: GitLab project path (e.g., group/subgroup/project) or GitHub repository (e.g., owner/repo)
 - `--max-diff-chars <number>`, `-m <number>`: Maximum characters for diffs (overrides MAX_DIFF_CHARS in .env)
 - `--fail-on-truncate`: Exit with error if diff is truncated (useful for CI/CD to enforce complete reviews)
+- `--platform <gitlab|github>`: Explicitly specify the platform when using a numeric ID with an ambiguous project path
 - `--debug`, `-d`: Show detailed debug information (prompt sent to LLM, raw response, etc.)
 
 ## Diff Size Management
@@ -251,6 +263,18 @@ LLM_API_URL=https://your-custom-endpoint.com/v1/chat/completions
 
 **Note:** Legacy `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` variables are still supported for backward compatibility.
 
+## Testing
+
+Run the test suite:
+```bash
+npm test
+```
+
+Run tests with coverage:
+```bash
+npm test -- --coverage
+```
+
 ## Output
 
 The tool provides:
@@ -267,9 +291,9 @@ The tool includes robust error handling:
 
 ### Automatic Retries
 - **LLM requests**: Up to 3 attempts with 2-minute timeout per attempt
-- **GitLab API**: Up to 3 attempts with 30-second timeout per attempt
-- **Rate limits**: Exponential backoff (2s, 4s, 8s delays)
-- **Server errors (5xx)**: Automatic retry with 3-second delay
+- **GitLab/GitHub API**: Up to 3 attempts with 30-second timeout per attempt
+- **Rate limits (429)**: Automatic wait until rate limit resets, then retry
+- **Server errors (5xx)**: Automatic retry with 2-second delay
 
 ### Timeout Protection
 If requests hang, the tool will:

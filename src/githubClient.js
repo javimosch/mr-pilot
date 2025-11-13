@@ -1,5 +1,8 @@
 const axios = require('axios');
 
+// Cache token validation to avoid repeated API calls
+let tokenValidated = false;
+
 function parsePRUrl(input, projectArg = null) {
   if (!input) {
     throw new Error('PR URL or number is required');
@@ -72,21 +75,77 @@ async function getDiffs(prUrl, projectArg = null, maxDiffChars = null) {
       'X-GitHub-Api-Version': '2022-11-28'
     };
 
+    // Validate token has required scopes (only once per session)
+    if (!tokenValidated) {
+      try {
+        const userResponse = await axios.get(`${apiBase}/user`, { headers, timeout: 10000 });
+        const scopes = userResponse.headers['x-oauth-scopes'];
+        if (scopes && !scopes.includes('repo')) {
+          throw new Error(
+            'GITHUB_TOKEN is missing the required "repo" scope. Please create a new token with the "repo" scope at https://github.com/settings/tokens'
+          );
+        }
+        tokenValidated = true;
+      } catch (scopeError) {
+        if (scopeError.message && scopeError.message.includes('repo')) {
+          throw scopeError;
+        }
+        // If scope check fails for other reasons, continue (token might still work)
+      }
+    }
+
     console.log(`Fetching PR ${prNumber} from ${owner}/${repo}...`);
 
-    // Fetch PR metadata
-    const prResponse = await axios.get(
-      `${apiBase}/repos/${owner}/${repo}/pulls/${prNumber}`,
-      { headers, timeout: 30000 }
-    );
+    // Fetch PR metadata with retry logic
+    let prResponse, filesResponse;
+    const maxRetries = 3;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        prResponse = await axios.get(
+          `${apiBase}/repos/${owner}/${repo}/pulls/${prNumber}`,
+          { headers, timeout: 30000 }
+        );
+        break; // Success, exit retry loop
+      } catch (error) {
+        if (error.response?.status === 429) {
+          const resetTime = error.response.headers['x-ratelimit-reset'];
+          if (resetTime && attempt < maxRetries) {
+            const waitTime = Math.max(0, parseInt(resetTime) * 1000 - Date.now());
+            const waitSeconds = Math.ceil(waitTime / 1000);
+            console.log(`⚠️  Rate limit exceeded. Waiting ${waitSeconds} seconds...`);
+            await new Promise((resolve) => setTimeout(resolve, waitTime + 1000));
+            continue;
+          }
+        }
+        throw error; // Re-throw if not rate limit or last attempt
+      }
+    }
 
     const pr = prResponse.data;
 
-    // Fetch PR files (includes diffs)
-    const filesResponse = await axios.get(
-      `${apiBase}/repos/${owner}/${repo}/pulls/${prNumber}/files`,
-      { headers, timeout: 30000 }
-    );
+    // Fetch PR files (includes diffs) with retry logic
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        filesResponse = await axios.get(
+          `${apiBase}/repos/${owner}/${repo}/pulls/${prNumber}/files`,
+          { headers, timeout: 30000 }
+        );
+        break; // Success, exit retry loop
+      } catch (error) {
+        if (error.response?.status === 429) {
+          const resetTime = error.response.headers['x-ratelimit-reset'];
+          if (resetTime && attempt < maxRetries) {
+            const waitTime = Math.max(0, parseInt(resetTime) * 1000 - Date.now());
+            const waitSeconds = Math.ceil(waitTime / 1000);
+            console.log(`⚠️  Rate limit exceeded. Waiting ${waitSeconds} seconds...`);
+            await new Promise((resolve) => setTimeout(resolve, waitTime + 1000));
+            continue;
+          }
+        }
+        throw error; // Re-throw if not rate limit or last attempt
+      }
+    }
 
     const files = filesResponse.data;
 
@@ -109,14 +168,28 @@ async function getDiffs(prUrl, projectArg = null, maxDiffChars = null) {
     let wasTruncated = false;
     if (diffsText.length > MAX_DIFF_LENGTH) {
       wasTruncated = true;
+      
+      // Find the last complete file before MAX_DIFF_LENGTH
+      const beforeLimit = diffsText.substring(0, MAX_DIFF_LENGTH);
+      const lastFileMarker = beforeLimit.lastIndexOf('\n### File:');
+      
+      let truncatedDiff;
+      if (lastFileMarker > 0) {
+        // Truncate at the last complete file
+        truncatedDiff = diffsText.substring(0, lastFileMarker);
+      } else {
+        // If no complete file fits, just use the limit
+        truncatedDiff = beforeLimit;
+      }
+      
       // Count how many files we're losing
       truncatedFiles =
         (diffsText.match(/### File:/g) || []).length -
-        (diffsText.substring(0, MAX_DIFF_LENGTH).match(/### File:/g) || []).length;
+        (truncatedDiff.match(/### File:/g) || []).length;
 
       diffsText =
-        diffsText.substring(0, MAX_DIFF_LENGTH) +
-        `\n\n⚠️ [DIFF TRUNCATED: ${truncatedFiles} files not shown due to size limit. Original: ${originalLength} chars, showing: ${MAX_DIFF_LENGTH} chars]\n` +
+        truncatedDiff +
+        `\n\n⚠️ [DIFF TRUNCATED: ${truncatedFiles} files not shown due to size limit. Original: ${originalLength} chars, showing: ${truncatedDiff.length} chars]\n` +
         `💡 To review all changes, use: --max-diff-chars ${originalLength + 1000}`;
     }
 
@@ -216,6 +289,18 @@ async function postComment(prUrl, commentBody, projectArg = null) {
           throw new Error(
             'Authentication failed or insufficient permissions to post comments.'
           );
+        } else if (error.response.status === 429) {
+          // Rate limit exceeded - retry after waiting
+          const resetTime = error.response.headers['x-ratelimit-reset'];
+          if (resetTime && !isLastAttempt) {
+            const waitTime = Math.max(0, parseInt(resetTime) * 1000 - Date.now());
+            const waitSeconds = Math.ceil(waitTime / 1000);
+            console.log(`⚠️  Rate limit exceeded. Waiting ${waitSeconds} seconds...`);
+            await new Promise((resolve) => setTimeout(resolve, waitTime + 1000));
+            continue;
+          } else if (isLastAttempt) {
+            throw new Error('GitHub API rate limit exceeded after retries. Please try again later.');
+          }
         } else if (error.response.status >= 500) {
           // Server error - retry
           if (isLastAttempt) {
