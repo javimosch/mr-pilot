@@ -87,10 +87,16 @@ async function getDiffs(prUrl, projectArg = null, maxDiffChars = null) {
         }
         tokenValidated = true;
       } catch (scopeError) {
+        // Only continue if it's our custom scope error
         if (scopeError.message && scopeError.message.includes('repo')) {
           throw scopeError;
         }
-        // If scope check fails for other reasons, continue (token might still work)
+        // For auth errors, throw them
+        if (scopeError.response && (scopeError.response.status === 401 || scopeError.response.status === 403)) {
+          throw new Error('Authentication failed. Check your GITHUB_TOKEN.');
+        }
+        // For other errors (network, timeout), throw them too
+        throw scopeError;
       }
     }
 
@@ -182,10 +188,10 @@ async function getDiffs(prUrl, projectArg = null, maxDiffChars = null) {
         truncatedDiff = beforeLimit;
       }
       
-      // Count how many files we're losing
-      truncatedFiles =
-        (diffsText.match(/### File:/g) || []).length -
-        (truncatedDiff.match(/### File:/g) || []).length;
+      // Count total and included files more accurately
+      const totalFiles = (diffsText.match(/### File:/g) || []).length;
+      const includedFiles = (truncatedDiff.match(/### File:/g) || []).length;
+      truncatedFiles = totalFiles - includedFiles;
 
       diffsText =
         truncatedDiff +
