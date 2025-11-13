@@ -128,7 +128,7 @@ async function main() {
     }
 
     // Step 2: Fetch MR/PR data
-    const client = getClient(mrUrlOrId);
+    const client = getClient(mrUrlOrId, projectPath);
     const mrData = await client.getDiffs(mrUrlOrId, projectPath, maxDiffChars);
     console.log(`✓ Retrieved: "${mrData.title}"`);
     console.log(`  ${mrData.changedFiles} file(s) changed\n`);
