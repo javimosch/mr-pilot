@@ -126,10 +126,10 @@ async function getDiffs(
         truncatedDiff = beforeLimit;
       }
       
-      // Count how many files we're losing
-      truncatedFiles =
-        (diffsText.match(/### File:/g) || []).length -
-        (truncatedDiff.match(/### File:/g) || []).length;
+      // Count total and included files more accurately
+      const totalFiles = (diffsText.match(/### File:/g) || []).length;
+      const includedFiles = (truncatedDiff.match(/### File:/g) || []).length;
+      truncatedFiles = totalFiles - includedFiles;
 
       diffsText =
         truncatedDiff +
