@@ -16,7 +16,7 @@ cp .env.example .env
 
 3. Fill in your credentials in `.env`:
    - `GITLAB_TOKEN`: Your GitLab personal access token (with `api` scope)
-   - `GITLAB_API`: Your GitLab API URL (e.g., https://git.geored.fr/api/v4)
+   - `GITLAB_API`: Your GitLab API URL (e.g., https://gitlab.com/api/v4)
    - `GITLAB_DEFAULT_PROJECT`: (Optional) Default project path for using MR ID only
    - `MAX_DIFF_CHARS`: (Optional) Maximum characters for diffs (default: 50000)
    - `LLM_PROVIDER`: LLM provider to use (openrouter, openai, ollama, azure)
@@ -27,7 +27,7 @@ cp .env.example .env
 
 ### Using full MR URL:
 ```bash
-node src/index.js https://git.geored.fr/RD_soft/simpliciti-frontend/geored-v3/-/merge_requests/1763
+node src/index.js https://gitlab.com/MyOrg/MyGroup/MyProject/-/merge_requests/1763
 ```
 
 ### Using MR ID with default project (set in .env):

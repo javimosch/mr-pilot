@@ -60,7 +60,7 @@ async function main() {
       console.error('');
       console.error('Examples:');
       console.error('  # Using full MR URL');
-      console.error('  node src/index.js https://git.geored.fr/.../merge_requests/1763');
+      console.error('  node src/index.js https://gitlab.com/.../merge_requests/1763');
       console.error('');
       console.error('  # Using MR ID with default project (set GITLAB_DEFAULT_PROJECT in .env)');
       console.error('  node src/index.js 1763');
