@@ -1,6 +1,6 @@
-# GitLab MR Review Bot
+# AI Code Review Bot
 
-Automated code review tool that analyzes GitLab Merge Requests using AI.
+Automated code review tool that analyzes GitLab Merge Requests and GitHub Pull Requests using AI.
 
 ## Setup
 
@@ -15,28 +15,36 @@ cp .env.example .env
 ```
 
 3. Fill in your credentials in `.env`:
-   - `GITLAB_TOKEN`: Your GitLab personal access token (with `api` scope)
-   - `GITLAB_API`: Your GitLab API URL (e.g., https://gitlab.com/api/v4)
-   - `GITLAB_DEFAULT_PROJECT`: (Optional) Default project path for using MR ID only
-   - `MAX_DIFF_CHARS`: (Optional) Maximum characters for diffs (default: 50000)
-   - `LLM_PROVIDER`: LLM provider to use (openrouter, openai, ollama, azure)
-   - `LLM_API_KEY`: Your LLM API key (not needed for Ollama)
-   - `LLM_MODEL`: Model to use (e.g., openai/gpt-oss-120b:exacto, gpt-4o, llama3.1:8b)
+   - **For GitLab:**
+     - `GITLAB_TOKEN`: Your GitLab personal access token (with `api` scope)
+     - `GITLAB_API`: Your GitLab API URL (e.g., https://gitlab.com/api/v4)
+     - `GITLAB_DEFAULT_PROJECT`: (Optional) Default project path for using MR ID only
+   - **For GitHub:**
+     - `GITHUB_TOKEN`: Your GitHub personal access token (with `repo` scope)
+     - `GITHUB_DEFAULT_REPO`: (Optional) Default repository (e.g., owner/repo) for using PR number only
+   - **General:**
+     - `MAX_DIFF_CHARS`: (Optional) Maximum characters for diffs (default: 50000)
+   - **LLM Configuration:**
+     - `LLM_PROVIDER`: LLM provider to use (openrouter, openai, ollama, azure)
+     - `LLM_API_KEY`: Your LLM API key (not needed for Ollama)
+     - `LLM_MODEL`: Model to use (e.g., openai/gpt-oss-120b:exacto, gpt-4o, llama3.1:8b)
 
 ## Usage
 
-### Using full MR URL:
+### GitLab
+
+#### Using full MR URL:
 ```bash
 node src/index.js https://gitlab.com/MyOrg/MyGroup/MyProject/-/merge_requests/1763
 ```
 
-### Using MR ID with default project (set in .env):
+#### Using MR ID with default project (set in .env):
 ```bash
 # Set GITLAB_DEFAULT_PROJECT=RD_soft/simpliciti-frontend/geored-v3 in .env
 node src/index.js 1763
 ```
 
-### Using MR ID with project argument:
+#### Using MR ID with project argument:
 ```bash
 node src/index.js 1763 --project RD_soft/simpliciti-frontend/geored-v3
 ```
@@ -44,6 +52,31 @@ node src/index.js 1763 --project RD_soft/simpliciti-frontend/geored-v3
 Or using short flag:
 ```bash
 node src/index.js 1763 -p RD_soft/simpliciti-frontend/geored-v3
+```
+
+### GitHub
+
+#### Using full PR URL:
+```bash
+node src/index.js https://github.com/owner/repo/pull/123
+```
+
+#### Using PR number with default repository (set in .env):
+```bash
+# Set GITHUB_DEFAULT_REPO=owner/repo in .env
+node src/index.js 123
+```
+
+**Note:** When using just a number without a URL, the tool defaults to GitLab unless you provide the `--project` flag with a GitHub repository format (`owner/repo`) or have `GITHUB_DEFAULT_REPO` set in your `.env` file.
+
+#### Using PR number with repository argument:
+```bash
+node src/index.js 123 --project owner/repo
+```
+
+Or using short flag:
+```bash
+node src/index.js 123 -p owner/repo
 ```
 
 ### With ticket specification file:
@@ -92,10 +125,10 @@ node src/index.js 1763 -p RD_soft/simpliciti-frontend/geored-v3 -i input.txt -m 
 
 ## Options
 
-- `--comment`, `-c`: Post the review as a comment on the GitLab MR
+- `--comment`, `-c`: Post the review as a comment on the MR/PR
 - `--input-file <path>`, `-i <path>`: Path to a file containing ticket/requirement specification
 - `--guidelines-file <path>`, `-g <path>`: Path to project guidelines file (helps reduce false positives)
-- `--project <path>`, `-p <path>`: GitLab project path (e.g., group/subgroup/project)
+- `--project <path>`, `-p <path>`: GitLab project path (e.g., group/subgroup/project) or GitHub repository (e.g., owner/repo)
 - `--max-diff-chars <number>`, `-m <number>`: Maximum characters for diffs (overrides MAX_DIFF_CHARS in .env)
 - `--fail-on-truncate`: Exit with error if diff is truncated (useful for CI/CD to enforce complete reviews)
 - `--debug`, `-d`: Show detailed debug information (prompt sent to LLM, raw response, etc.)

@@ -1,7 +1,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { getMergeRequestDiffs, postMRComment } = require('./gitlabClient');
+const { getClient } = require('./clientFactory');
 const { buildPrompt } = require('./promptBuilder');
 const { analyzeMR } = require('./openrouterClient');
 const { printResult, formatCommentBody } = require('./outputFormatter');
@@ -85,7 +85,7 @@ async function main() {
       process.exit(1);
     }
 
-    console.log('GitLab MR Review Bot\n');
+    console.log('AI Code Review Bot\n');
 
     // Step 1: Read input file if provided
     let ticketScope = null;
@@ -127,9 +127,10 @@ async function main() {
       }
     }
 
-    // Step 2: Fetch MR data from GitLab
-    const mrData = await getMergeRequestDiffs(mrUrlOrId, projectPath, maxDiffChars);
-    console.log(`✓ Retrieved MR: "${mrData.title}"`);
+    // Step 2: Fetch MR/PR data
+    const client = getClient(mrUrlOrId);
+    const mrData = await client.getDiffs(mrUrlOrId, projectPath, maxDiffChars);
+    console.log(`✓ Retrieved: "${mrData.title}"`);
     console.log(`  ${mrData.changedFiles} file(s) changed\n`);
 
     // Show diff stats
@@ -204,7 +205,7 @@ async function main() {
         console.log();
       }
       
-      await postMRComment(mrUrlOrId, commentBody, projectPath);
+      await client.postComment(mrUrlOrId, commentBody, projectPath);
     }
 
   } catch (error) {
