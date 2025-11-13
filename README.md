@@ -1,6 +1,6 @@
-# GitLab MR Review Bot
+# AI Code Review Bot
 
-Automated code review tool that analyzes GitLab Merge Requests using AI.
+Automated code review tool that analyzes GitLab Merge Requests and GitHub Pull Requests using AI.
 
 ## Setup
 
@@ -9,34 +9,47 @@ Automated code review tool that analyzes GitLab Merge Requests using AI.
 npm install
 ```
 
+For development (includes testing tools):
+```bash
+npm install --include=dev
+```
+
 2. Create `.env` file (copy from `.env.example`):
 ```bash
 cp .env.example .env
 ```
 
 3. Fill in your credentials in `.env`:
-   - `GITLAB_TOKEN`: Your GitLab personal access token (with `api` scope)
-   - `GITLAB_API`: Your GitLab API URL (e.g., https://gitlab.com/api/v4)
-   - `GITLAB_DEFAULT_PROJECT`: (Optional) Default project path for using MR ID only
-   - `MAX_DIFF_CHARS`: (Optional) Maximum characters for diffs (default: 50000)
-   - `LLM_PROVIDER`: LLM provider to use (openrouter, openai, ollama, azure)
-   - `LLM_API_KEY`: Your LLM API key (not needed for Ollama)
-   - `LLM_MODEL`: Model to use (e.g., openai/gpt-oss-120b:exacto, gpt-4o, llama3.1:8b)
+   - **For GitLab:**
+     - `GITLAB_TOKEN`: Your GitLab personal access token (with `api` scope)
+     - `GITLAB_API`: Your GitLab API URL (e.g., https://gitlab.com/api/v4)
+     - `GITLAB_DEFAULT_PROJECT`: (Optional) Default project path for using MR ID only
+   - **For GitHub:**
+     - `GITHUB_TOKEN`: Your GitHub personal access token (with `repo` scope)
+     - `GITHUB_DEFAULT_REPO`: (Optional) Default repository (e.g., owner/repo) for using PR number only
+   - **General:**
+     - `MAX_DIFF_CHARS`: (Optional) Maximum characters for diffs (default: 50000)
+   - **LLM Configuration:**
+     - `LLM_PROVIDER`: LLM provider to use (openrouter, openai, ollama, azure)
+     - `LLM_API_KEY`: Your LLM API key (not needed for Ollama)
+     - `LLM_MODEL`: Model to use (e.g., openai/gpt-oss-120b:exacto, gpt-4o, llama3.1:8b)
 
 ## Usage
 
-### Using full MR URL:
+### GitLab
+
+#### Using full MR URL:
 ```bash
 node src/index.js https://gitlab.com/MyOrg/MyGroup/MyProject/-/merge_requests/1763
 ```
 
-### Using MR ID with default project (set in .env):
+#### Using MR ID with default project (set in .env):
 ```bash
 # Set GITLAB_DEFAULT_PROJECT=RD_soft/simpliciti-frontend/geored-v3 in .env
 node src/index.js 1763
 ```
 
-### Using MR ID with project argument:
+#### Using MR ID with project argument:
 ```bash
 node src/index.js 1763 --project RD_soft/simpliciti-frontend/geored-v3
 ```
@@ -44,6 +57,35 @@ node src/index.js 1763 --project RD_soft/simpliciti-frontend/geored-v3
 Or using short flag:
 ```bash
 node src/index.js 1763 -p RD_soft/simpliciti-frontend/geored-v3
+```
+
+### GitHub
+
+#### Using full PR URL:
+```bash
+node src/index.js https://github.com/owner/repo/pull/123
+```
+
+#### Using PR number with default repository (set in .env):
+```bash
+# Set GITHUB_DEFAULT_REPO=owner/repo in .env
+node src/index.js 123
+```
+
+**Auto-selection rules for numeric IDs:**
+- **2-segment paths** (e.g., `owner/repo`) → Auto-selects **GitHub**
+- **3+ segment paths** (e.g., `group/subgroup/project`) → Auto-selects **GitLab**
+- **Priority:** `--project` argument > `GITHUB_DEFAULT_REPO` > `GITLAB_DEFAULT_PROJECT`
+- **Override anytime** with `--platform gitlab` or `--platform github`
+
+#### Using PR number with repository argument:
+```bash
+node src/index.js 123 --project owner/repo
+```
+
+Or using short flag:
+```bash
+node src/index.js 123 -p owner/repo
 ```
 
 ### With ticket specification file:
@@ -92,12 +134,13 @@ node src/index.js 1763 -p RD_soft/simpliciti-frontend/geored-v3 -i input.txt -m 
 
 ## Options
 
-- `--comment`, `-c`: Post the review as a comment on the GitLab MR
+- `--comment`, `-c`: Post the review as a comment on the MR/PR
 - `--input-file <path>`, `-i <path>`: Path to a file containing ticket/requirement specification
 - `--guidelines-file <path>`, `-g <path>`: Path to project guidelines file (helps reduce false positives)
-- `--project <path>`, `-p <path>`: GitLab project path (e.g., group/subgroup/project)
+- `--project <path>`, `-p <path>`: GitLab project path (e.g., group/subgroup/project) or GitHub repository (e.g., owner/repo)
 - `--max-diff-chars <number>`, `-m <number>`: Maximum characters for diffs (overrides MAX_DIFF_CHARS in .env)
 - `--fail-on-truncate`: Exit with error if diff is truncated (useful for CI/CD to enforce complete reviews)
+- `--platform <gitlab|github>`: Explicitly specify the platform when using a numeric ID with an ambiguous project path
 - `--debug`, `-d`: Show detailed debug information (prompt sent to LLM, raw response, etc.)
 
 ## Diff Size Management
@@ -218,6 +261,18 @@ LLM_API_URL=https://your-custom-endpoint.com/v1/chat/completions
 
 **Note:** Legacy `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` variables are still supported for backward compatibility.
 
+## Testing
+
+Run the test suite:
+```bash
+npm test
+```
+
+Run tests with coverage:
+```bash
+npm test -- --coverage
+```
+
 ## Output
 
 The tool provides:
@@ -234,9 +289,9 @@ The tool includes robust error handling:
 
 ### Automatic Retries
 - **LLM requests**: Up to 3 attempts with 2-minute timeout per attempt
-- **GitLab API**: Up to 3 attempts with 30-second timeout per attempt
-- **Rate limits**: Exponential backoff (2s, 4s, 8s delays)
-- **Server errors (5xx)**: Automatic retry with 3-second delay
+- **GitLab/GitHub API**: Up to 3 attempts with 30-second timeout per attempt
+- **Rate limits (429)**: Automatic wait until rate limit resets, then retry
+- **Server errors (5xx)**: Automatic retry with 2-second delay
 
 ### Timeout Protection
 If requests hang, the tool will:

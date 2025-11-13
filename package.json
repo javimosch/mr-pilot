@@ -1,18 +1,20 @@
 {
   "name": "mr-pilot",
   "version": "1.0.2",
-  "description": "AI code reviewer for GitLab MRs - Get instant feedback on bugs, quality, and requirements. Works with OpenAI, Ollama, Claude & more.",
+  "description": "AI code reviewer for GitLab MRs and GitHub PRs - Get instant feedback on bugs, quality, and requirements. Works with OpenAI, Ollama, Claude & more.",
   "main": "src/index.js",
   "bin": {
     "mr-pilot": "./bin/mr-pilot.js"
   },
   "scripts": {
     "start": "node src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "keywords": [
     "gitlab",
+    "github",
     "merge-request",
+    "pull-request",
     "code-review",
     "ai",
     "llm",
@@ -43,6 +45,9 @@
   "dependencies": {
     "axios": "^1.13.2",
     "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   },
   "files": [
     "bin/",

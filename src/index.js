@@ -1,7 +1,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { getMergeRequestDiffs, postMRComment } = require('./gitlabClient');
+const { getClient } = require('./clientFactory');
 const { buildPrompt } = require('./promptBuilder');
 const { analyzeMR } = require('./openrouterClient');
 const { printResult, formatCommentBody } = require('./outputFormatter');
@@ -14,6 +14,19 @@ async function main() {
     const shouldComment = args.includes('--comment') || args.includes('-c');
     const debugMode = args.includes('--debug') || args.includes('-d');
     const bailOnTruncate = args.includes('--fail-on-truncate') || args.includes('--bail-on-truncate');
+    
+    // Find platform argument
+    const platformIndex = args.findIndex(arg => arg === '--platform');
+    let platform = null;
+    if (platformIndex !== -1) {
+      if (!args[platformIndex + 1] || args[platformIndex + 1].startsWith('--') || args[platformIndex + 1].startsWith('-')) {
+        throw new Error('--platform flag requires a value: "gitlab" or "github"');
+      }
+      platform = args[platformIndex + 1].toLowerCase();
+      if (platform !== 'gitlab' && platform !== 'github') {
+        throw new Error('--platform must be either "gitlab" or "github"');
+      }
+    }
     
     // Find input file argument
     const inputFileIndex = args.findIndex(arg => arg === '--input-file' || arg === '-i');
@@ -56,6 +69,7 @@ async function main() {
       console.error('  --project, -p <path>             GitLab project path (e.g., group/subgroup/project)');
       console.error('  --max-diff-chars, -m <number>    Maximum characters for diffs (default: 50000)');
       console.error('  --fail-on-truncate               Exit with error if diff is truncated (no LLM call)');
+      console.error('  --platform <gitlab|github>       Specify platform when using numeric ID with ambiguous project path');
       console.error('  --debug, -d                      Show detailed debug information');
       console.error('');
       console.error('Examples:');
@@ -85,7 +99,7 @@ async function main() {
       process.exit(1);
     }
 
-    console.log('GitLab MR Review Bot\n');
+    console.log('AI Code Review Bot\n');
 
     // Step 1: Read input file if provided
     let ticketScope = null;
@@ -127,9 +141,11 @@ async function main() {
       }
     }
 
-    // Step 2: Fetch MR data from GitLab
-    const mrData = await getMergeRequestDiffs(mrUrlOrId, projectPath, maxDiffChars);
-    console.log(`✓ Retrieved MR: "${mrData.title}"`);
+    // Step 2: Fetch MR/PR data
+    const client = getClient(mrUrlOrId, projectPath, platform);
+    const mrData = await client.getDiffs(mrUrlOrId, projectPath, maxDiffChars);
+    const platformName = client.platform === 'github' ? 'GitHub PR' : 'GitLab MR';
+    console.log(`✓ Retrieved ${platformName}: "${mrData.title}"`);
     console.log(`  ${mrData.changedFiles} file(s) changed\n`);
 
     // Show diff stats
@@ -204,7 +220,7 @@ async function main() {
         console.log();
       }
       
-      await postMRComment(mrUrlOrId, commentBody, projectPath);
+      await client.postComment(mrUrlOrId, commentBody, projectPath);
     }
 
   } catch (error) {
