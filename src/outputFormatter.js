@@ -100,7 +100,7 @@ function formatCommentBody(result) {
   comment += '### 📝 Remarks\n\n';
   comment += `${result.remarks}\n\n`;
   comment += '---\n';
-  comment += '*Generated automatically by GitLab MR Review Bot*';
+  comment += '*Generated automatically by AI Code Review Bot*';
 
   return comment;
 }
