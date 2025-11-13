@@ -59,6 +59,13 @@ async function main() {
       }
     }
 
+    // Find acceptance criteria argument
+    const acceptanceCriteriaIndex = args.findIndex(arg => arg === '--acceptance-criteria' || arg === '-a');
+    let acceptanceCriteria = null;
+    if (acceptanceCriteriaIndex !== -1 && args[acceptanceCriteriaIndex + 1]) {
+      acceptanceCriteria = args[acceptanceCriteriaIndex + 1];
+    }
+
     if (!mrUrlOrId) {
       console.error('Usage: node src/index.js <mr_url_or_id> [options]');
       console.error('');
@@ -70,6 +77,7 @@ async function main() {
       console.error('  --max-diff-chars, -m <number>    Maximum characters for diffs (default: 50000)');
       console.error('  --fail-on-truncate               Exit with error if diff is truncated (no LLM call)');
       console.error('  --platform <gitlab|github>       Specify platform when using numeric ID with ambiguous project path');
+      console.error('  --acceptance-criteria, -a <text> Add acceptance criteria to the output');
       console.error('  --debug, -d                      Show detailed debug information');
       console.error('');
       console.error('Examples:');
@@ -96,6 +104,9 @@ async function main() {
       console.error('');
       console.error('  # With guidelines to reduce false positives');
       console.error('  node src/index.js 1763 -i input.txt -g guidelines.txt');
+      console.error('');
+      console.error('  # With acceptance criteria');
+      console.error('  node src/index.js 1763 -a "Approve if score > 50"');
       process.exit(1);
     }
 
@@ -206,11 +217,11 @@ async function main() {
     }
 
     // Step 5: Parse and display results
-    const result = printResult(response);
+    const result = printResult(response, acceptanceCriteria);
 
     // Step 6: Post comment if requested
     if (shouldComment) {
-      const commentBody = formatCommentBody(result);
+      const commentBody = formatCommentBody(result, acceptanceCriteria);
       
       if (debugMode) {
         console.log('\n💬 DEBUG - Comment to be posted:');

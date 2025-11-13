@@ -1,4 +1,4 @@
-function printResult(jsonString) {
+function printResult(jsonString, acceptanceCriteria = null) {
   try {
     // Try to extract JSON from markdown code blocks if present
     let cleanJson = jsonString.trim();
@@ -53,6 +53,11 @@ function printResult(jsonString) {
     console.log();
     console.log(`Goal Status: ${result.goal_status.toUpperCase()}`);
     console.log(`Quality Score: ${result.score}/100`);
+
+    if (acceptanceCriteria) {
+      console.log(`Acceptance Criteria: ${acceptanceCriteria}`);
+    }
+
     console.log();
 
     if (result.errors && result.errors.length > 0) {
@@ -81,11 +86,17 @@ function printResult(jsonString) {
   }
 }
 
-function formatCommentBody(result) {
+function formatCommentBody(result, acceptanceCriteria = null) {
   let comment = '## 🤖 AI Code Review\n\n';
   
   comment += `**Goal Status:** ${result.goal_status.toUpperCase()}\n`;
-  comment += `**Quality Score:** ${result.score}/100\n\n`;
+  comment += `**Quality Score:** ${result.score}/100\n`;
+  
+  if (acceptanceCriteria) {
+    comment += `**Acceptance Criteria:** ${acceptanceCriteria}\n`;
+  }
+  
+  comment += '\n';
 
   if (result.errors && result.errors.length > 0) {
     comment += '### ⚠️ Potential Issues\n\n';
@@ -104,5 +115,6 @@ function formatCommentBody(result) {
 
   return comment;
 }
+
 
 module.exports = { printResult, formatCommentBody };
