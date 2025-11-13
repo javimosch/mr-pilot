@@ -1,6 +1,6 @@
 {
   "name": "mr-pilot",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "AI code reviewer for GitLab MRs - Get instant feedback on bugs, quality, and requirements. Works with OpenAI, Ollama, Claude & more.",
   "main": "src/index.js",
   "bin": {
