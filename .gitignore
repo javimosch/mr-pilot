@@ -1,5 +1,6 @@
 input.txt
 *.txt
+!.env.example
 node_modules/
 .env
 .DS_Store
