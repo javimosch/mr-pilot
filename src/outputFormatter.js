@@ -24,7 +24,28 @@ function printResult(jsonString) {
     }
 
     cleanJson = cleanJson.trim();
-    const result = JSON.parse(cleanJson);
+    
+    // Fix common LLM JSON formatting issues
+    // 1. Remove invalid escape sequences like \{ \} \[ \] but keep valid ones like \" \\
+    cleanJson = cleanJson.replace(/\\([{}[\]])/g, '$1');
+    
+    // 2. Fix unescaped newlines within strings (between quotes)
+    // This is complex, so we'll try to parse and if it fails, show helpful error
+    
+    let result;
+    try {
+      result = JSON.parse(cleanJson);
+    } catch (firstError) {
+      // Try to fix unescaped newlines in strings
+      // Split by quotes and fix newlines only in string content (odd-indexed parts)
+      const parts = cleanJson.split('"');
+      for (let i = 1; i < parts.length; i += 2) {
+        // This is string content - escape newlines
+        parts[i] = parts[i].replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+      }
+      cleanJson = parts.join('"');
+      result = JSON.parse(cleanJson);
+    }
 
     console.log('\n' + '='.repeat(50));
     console.log('         MR REVIEW REPORT');
