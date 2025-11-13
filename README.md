@@ -72,13 +72,11 @@ node src/index.js https://github.com/owner/repo/pull/123
 node src/index.js 123
 ```
 
-**Note:** When using just a number without a URL:
-- If the project path has 2 segments (e.g., `owner/repo` or `group/project`), it's ambiguous and you **must** use the `--platform` flag:
-  ```bash
-  node src/index.js 123 --project owner/repo --platform github
-  ```
-- If the project path has 3+ segments (e.g., `group/subgroup/project`), it's assumed to be GitLab.
-- If no project is specified, it defaults to GitLab.
+**Auto-selection rules for numeric IDs:**
+- **2-segment paths** (e.g., `owner/repo`) → Auto-selects **GitHub**
+- **3+ segment paths** (e.g., `group/subgroup/project`) → Auto-selects **GitLab**
+- **Priority:** `--project` argument > `GITHUB_DEFAULT_REPO` > `GITLAB_DEFAULT_PROJECT`
+- **Override anytime** with `--platform gitlab` or `--platform github`
 
 #### Using PR number with repository argument:
 ```bash

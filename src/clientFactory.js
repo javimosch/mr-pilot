@@ -43,31 +43,31 @@ function getClient(urlOrId, projectArg = null, platformArg = null) {
     };
   }
   
-  // If it's just a number, check for ambiguous project path
+  // If it's just a number, auto-select based on configured defaults
   if (/^\d+$/.test(urlOrId)) {
     const githubRepo = projectArg || process.env.GITHUB_DEFAULT_REPO;
     const gitlabProject = process.env.GITLAB_DEFAULT_PROJECT;
     
-    // Check if GitHub repo is configured and has value
-    if (githubRepo && githubRepo.trim()) {
-      // If project path looks like owner/repo (2 segments), it's ambiguous
-      if (githubRepo.split('/').length === 2) {
-        throw new Error(
-          `Ambiguous project path "${githubRepo}". This could be either a GitLab or GitHub project. ` +
-          'Please use the --platform flag to specify: --platform gitlab or --platform github'
-        );
-      }
+    // Auto-select GitHub if GITHUB_DEFAULT_REPO is configured (2 segments = GitHub)
+    if (githubRepo && githubRepo.trim() && githubRepo.split('/').length === 2) {
+      return {
+        getDiffs: getGitHubDiffs,
+        postComment: postGitHubComment,
+        platform: 'github'
+      };
     }
-    // Also check GitLab if no GitHub repo but GitLab is configured
-    else if (gitlabProject && gitlabProject.trim() && gitlabProject.split('/').length === 2) {
-      throw new Error(
-        `Ambiguous project path "${gitlabProject}". This could be either a GitLab or GitHub project. ` +
-        'Please use the --platform flag to specify: --platform gitlab or --platform github'
-      );
+    
+    // Auto-select GitLab if GITLAB_DEFAULT_PROJECT is configured or project has 3+ segments
+    if ((gitlabProject && gitlabProject.trim()) || (githubRepo && githubRepo.split('/').length >= 3)) {
+      return {
+        getDiffs: getGitLabDiffs,
+        postComment: postGitLabComment,
+        platform: 'gitlab'
+      };
     }
   }
   
-  // Default to GitLab
+  // Default to GitLab if no configuration found
   return {
     getDiffs: getGitLabDiffs,
     postComment: postGitLabComment,

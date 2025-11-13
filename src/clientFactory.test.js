@@ -41,14 +41,33 @@ describe('clientFactory', () => {
     });
   });
 
-  describe('Ambiguous project path', () => {
-    test('should throw error for ambiguous 2-segment path without platform flag', () => {
-      expect(() => {
-        getClient('123', 'owner/repo');
-      }).toThrow(/Ambiguous project path/);
+  describe('Auto-selection based on default repos', () => {
+    test('should auto-select GitHub when GITHUB_DEFAULT_REPO is set', () => {
+      process.env.GITHUB_DEFAULT_REPO = 'owner/repo';
+      const client = getClient('123');
+      expect(client.platform).toBe('github');
     });
 
-    test('should not throw for 3-segment GitLab path', () => {
+    test('should auto-select GitLab when GITLAB_DEFAULT_PROJECT is set', () => {
+      process.env.GITLAB_DEFAULT_PROJECT = 'group/subgroup/project';
+      const client = getClient('123');
+      expect(client.platform).toBe('gitlab');
+    });
+
+    test('should prioritize GitHub when both defaults are set', () => {
+      process.env.GITHUB_DEFAULT_REPO = 'owner/repo';
+      process.env.GITLAB_DEFAULT_PROJECT = 'group/project';
+      const client = getClient('123');
+      expect(client.platform).toBe('github');
+    });
+
+    test('should use projectArg over env var for GitHub', () => {
+      process.env.GITLAB_DEFAULT_PROJECT = 'group/project';
+      const client = getClient('123', 'owner/repo');
+      expect(client.platform).toBe('github');
+    });
+
+    test('should handle 3-segment paths correctly', () => {
       const client = getClient('123', 'group/subgroup/project');
       expect(client.platform).toBe('gitlab');
     });
