@@ -45,12 +45,23 @@ function getClient(urlOrId, projectArg = null, platformArg = null) {
   
   // If it's just a number, check for ambiguous project path
   if (/^\d+$/.test(urlOrId)) {
-    const project = projectArg || process.env.GITHUB_DEFAULT_REPO || process.env.GITLAB_DEFAULT_PROJECT;
+    const githubRepo = projectArg || process.env.GITHUB_DEFAULT_REPO;
+    const gitlabProject = process.env.GITLAB_DEFAULT_PROJECT;
     
-    // If project path looks like owner/repo (2 segments), it's ambiguous
-    if (project && project.split('/').length === 2) {
+    // Check if GitHub repo is configured and has value
+    if (githubRepo && githubRepo.trim()) {
+      // If project path looks like owner/repo (2 segments), it's ambiguous
+      if (githubRepo.split('/').length === 2) {
+        throw new Error(
+          `Ambiguous project path "${githubRepo}". This could be either a GitLab or GitHub project. ` +
+          'Please use the --platform flag to specify: --platform gitlab or --platform github'
+        );
+      }
+    }
+    // Also check GitLab if no GitHub repo but GitLab is configured
+    else if (gitlabProject && gitlabProject.trim() && gitlabProject.split('/').length === 2) {
       throw new Error(
-        `Ambiguous project path "${project}". This could be either a GitLab or GitHub project. ` +
+        `Ambiguous project path "${gitlabProject}". This could be either a GitLab or GitHub project. ` +
         'Please use the --platform flag to specify: --platform gitlab or --platform github'
       );
     }
