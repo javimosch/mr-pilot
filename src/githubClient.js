@@ -1,7 +1,9 @@
 const axios = require('axios');
 
-// Cache token validation to avoid repeated API calls
+// Cache token validation to avoid repeated API calls within a session
+// Reset between different runs by clearing on module reload
 let tokenValidated = false;
+let lastValidatedToken = null;
 
 function parsePRUrl(input, projectArg = null) {
   if (!input) {
@@ -75,8 +77,9 @@ async function getDiffs(prUrl, projectArg = null, maxDiffChars = null) {
       'X-GitHub-Api-Version': '2022-11-28'
     };
 
-    // Validate token has required scopes (only once per session)
-    if (!tokenValidated) {
+    // Validate token has required scopes (only once per session per token)
+    const currentToken = token.substring(0, 20); // Use prefix for cache key
+    if (!tokenValidated || lastValidatedToken !== currentToken) {
       try {
         const userResponse = await axios.get(`${apiBase}/user`, { headers, timeout: 10000 });
         const scopes = userResponse.headers['x-oauth-scopes'];
@@ -86,6 +89,7 @@ async function getDiffs(prUrl, projectArg = null, maxDiffChars = null) {
           );
         }
         tokenValidated = true;
+        lastValidatedToken = currentToken;
       } catch (scopeError) {
         // Only continue if it's our custom scope error
         if (scopeError.message && scopeError.message.includes('repo')) {
