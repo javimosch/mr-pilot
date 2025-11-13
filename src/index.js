@@ -18,7 +18,10 @@ async function main() {
     // Find platform argument
     const platformIndex = args.findIndex(arg => arg === '--platform');
     let platform = null;
-    if (platformIndex !== -1 && args[platformIndex + 1]) {
+    if (platformIndex !== -1) {
+      if (!args[platformIndex + 1] || args[platformIndex + 1].startsWith('--') || args[platformIndex + 1].startsWith('-')) {
+        throw new Error('--platform flag requires a value: "gitlab" or "github"');
+      }
       platform = args[platformIndex + 1].toLowerCase();
       if (platform !== 'gitlab' && platform !== 'github') {
         throw new Error('--platform must be either "gitlab" or "github"');
