@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  mcp-server:
+    container_name: mr-pilot-mcp-server
+    image: javimosch/mr-pilot-mcp-server:latest
+    expose:
+      - "8000"
+    
+    restart: always
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    
+    # Network configuration
+    networks:
+      - mcp-network
+
+networks:
+  mcp-network:
+    driver: bridge
+
