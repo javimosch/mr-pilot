@@ -1,0 +1,27 @@
+{
+  "name": "mr-pilot-mcp-server",
+  "version": "1.0.0",
+  "description": "Model Context Protocol server for mr-pilot - AI code review for GitLab MRs and GitHub PRs",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "npx nodemon server.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mr-pilot",
+    "gitlab",
+    "github",
+    "code-review",
+    "ai"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {}
+}
+
