@@ -6,6 +6,7 @@ Model Context Protocol (MCP) server that exposes mr-pilot's AI code review capab
 
 - **SSE/HTTP Transport**: Implements the MCP specification with Server-Sent Events for real-time communication
 - **Code Review Tool**: Exposes `review_merge_request` tool for reviewing MRs/PRs
+- **Proxy Mode**: Distributed execution with proxy server and slave instances (see [PROXY-MODE.md](PROXY-MODE.md))
 - **Environment Variable Support**: All mr-pilot configuration via environment variables
 - **Comprehensive Logging**: Detailed logs with timestamps for debugging
 - **Development & Production Modes**: Supports both `npm run dev` and installed binary
@@ -267,6 +268,20 @@ NODE_ENV=production npm start
 ```
 
 This uses the globally installed `mr-pilot` binary.
+
+### Testing Proxy Mode
+
+```bash
+npm run test:proxy
+```
+
+This runs integration tests for the proxy mode feature.
+
+## Advanced Features
+
+### Proxy Mode
+
+For distributed execution and credential isolation, see [PROXY-MODE.md](PROXY-MODE.md) for detailed documentation on setting up proxy and slave instances.
 
 ## License
 

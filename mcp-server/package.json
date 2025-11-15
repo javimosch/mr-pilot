@@ -6,7 +6,8 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "dev": "npx nodemon server.js"
+    "dev": "npx nodemon server.js",
+    "test:proxy": "node test-proxy.js"
   },
   "keywords": [
     "mcp",
@@ -22,6 +23,7 @@
   "engines": {
     "node": ">=14.0.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "ws": "^8.18.3"
+  }
 }
-
