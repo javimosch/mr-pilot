@@ -6,6 +6,9 @@
  * Integrates with mr-pilot CLI for GitLab MR and GitHub PR reviews
  */
 
+// Load environment variables from .env file
+require('dotenv').config();
+
 const http = require('http');
 const { EventEmitter } = require('events');
 const crypto = require('crypto');
@@ -21,11 +24,13 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Auth configuration
 const AUTH_BEARER_KEYS = process.env.AUTH_BEARER_KEYS ? process.env.AUTH_BEARER_KEYS.split(',').map(k => k.trim()) : [];
+const AUTH_CUSTOM_HEADER = process.env.AUTH_CUSTOM_HEADER || ''; // e.g., 'x-api-key'
 
 // Proxy mode configuration
 const PROXY_MODE = process.env.PROXY_MODE === '1';
 const SLAVE_CODES = process.env.SLAVE_CODES ? process.env.SLAVE_CODES.split(',').map(c => c.trim()) : [];
 const PROXY_WS_PORT = process.env.PROXY_WS_PORT || 8001;
+const PROXY_WS_HOST = process.env.PROXY_WS_HOST || '0.0.0.0';
 
 // Slave mode configuration
 const PROXY_SLAVE = process.env.PROXY_SLAVE === '1';
@@ -47,25 +52,34 @@ const pendingProxyRequests = new Map();
 let slaveWsClient = null;
 
 /**
- * Verify bearer token authentication
+ * Verify authentication (Bearer token or custom header)
  */
 function verifyBearerAuth(req) {
   if (AUTH_BEARER_KEYS.length === 0) {
     return true;
   }
 
+  // Try Bearer token first
   const authHeader = req.headers['authorization'];
-  if (!authHeader) {
-    return false;
+  if (authHeader) {
+    const match = authHeader.match(/^Bearer\s+(.+)$/i);
+    if (match) {
+      const token = match[1];
+      if (AUTH_BEARER_KEYS.includes(token)) {
+        return true;
+      }
+    }
   }
 
-  const match = authHeader.match(/^Bearer\s+(.+)$/i);
-  if (!match) {
-    return false;
+  // Fallback to custom header if configured
+  if (AUTH_CUSTOM_HEADER) {
+    const customHeaderValue = req.headers[AUTH_CUSTOM_HEADER.toLowerCase()];
+    if (customHeaderValue && AUTH_BEARER_KEYS.includes(customHeaderValue)) {
+      return true;
+    }
   }
 
-  const token = match[1];
-  return AUTH_BEARER_KEYS.includes(token);
+  return false;
 }
 
 /**
@@ -744,7 +758,13 @@ function handleRequest(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  // Build allowed headers list dynamically
+  const allowedHeaders = ['Content-Type', 'Authorization'];
+  if (AUTH_CUSTOM_HEADER) {
+    allowedHeaders.push(AUTH_CUSTOM_HEADER);
+  }
+  res.setHeader('Access-Control-Allow-Headers', allowedHeaders.join(', '));
 
   // Handle preflight
   if (req.method === 'OPTIONS') {
@@ -850,10 +870,13 @@ function initProxyServer() {
     logWarn('[PROXY] No SLAVE_CODES configured. Proxy mode enabled but no slaves can connect.');
   }
 
-  proxyWsServer = new WebSocketServer({ port: PROXY_WS_PORT });
+  proxyWsServer = new WebSocketServer({ 
+    port: PROXY_WS_PORT,
+    host: PROXY_WS_HOST
+  });
 
   proxyWsServer.on('listening', () => {
-    log(`[PROXY] WebSocket server listening on port ${PROXY_WS_PORT}`);
+    log(`[PROXY] WebSocket server listening on ${PROXY_WS_HOST}:${PROXY_WS_PORT}`);
     log(`[PROXY] Valid slave codes: ${SLAVE_CODES.length} configured`);
   });
 
@@ -1016,11 +1039,21 @@ server.listen(PORT, HOST, () => {
   log(`Listening on http://${HOST}:${PORT}`);
   log(`Protocol Version: ${MCP_PROTOCOL_VERSION}`);
   log(`Environment: ${NODE_ENV}`);
-  log(`Authentication: ${AUTH_BEARER_KEYS.length > 0 ? `Enabled (${AUTH_BEARER_KEYS.length} keys)` : 'Disabled'}`);
+  
+  // Build auth status message
+  if (AUTH_BEARER_KEYS.length > 0) {
+    const authMethods = ['Bearer'];
+    if (AUTH_CUSTOM_HEADER) {
+      authMethods.push(`Custom Header (${AUTH_CUSTOM_HEADER})`);
+    }
+    log(`Authentication: Enabled (${AUTH_BEARER_KEYS.length} keys, methods: ${authMethods.join(', ')})`);
+  } else {
+    log(`Authentication: Disabled`);
+  }
   
   if (PROXY_MODE) {
     log(`Mode: PROXY SERVER`);
-    log(`Proxy WebSocket Port: ${PROXY_WS_PORT}`);
+    log(`Proxy WebSocket: ${PROXY_WS_HOST}:${PROXY_WS_PORT}`);
     log(`Configured slave codes: ${SLAVE_CODES.length}`);
   } else if (PROXY_SLAVE) {
     log(`Mode: SLAVE INSTANCE`);
@@ -1036,6 +1069,7 @@ server.listen(PORT, HOST, () => {
   if (!PROXY_SLAVE) {
     log('Environment variables required by mr-pilot:');
     log('  - AUTH_BEARER_KEYS (optional, comma-separated API keys for bearer auth)');
+    log('  - AUTH_CUSTOM_HEADER (optional, custom header name for auth, e.g., x-api-key)');
     log('  - GITLAB_TOKEN (for GitLab MRs)');
     log('  - GITLAB_API (GitLab API URL)');
     log('  - GITLAB_DEFAULT_PROJECT (optional default project)');
@@ -1054,6 +1088,7 @@ server.listen(PORT, HOST, () => {
     log('  - PROXY_MODE=1 (enable proxy server)');
     log('  - SLAVE_CODES (comma-separated list of valid slave codes)');
     log('  - PROXY_WS_PORT (WebSocket port, default: 8001)');
+    log('  - PROXY_WS_HOST (WebSocket bind address, default: 0.0.0.0)');
     log('');
   }
   
