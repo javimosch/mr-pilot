@@ -2,6 +2,83 @@
 
 Automated code review tool that analyzes GitLab Merge Requests and GitHub Pull Requests using AI.
 
+---
+
+## 🚀 MCP Server Mode
+
+**Turn your code review bot into a Model Context Protocol (MCP) server!**
+
+The MCP server exposes code review capabilities through a standardized protocol, allowing AI assistants like Claude Desktop, Cline, and other MCP clients to perform GitLab/GitHub reviews directly from their interfaces.
+
+### ✨ Features
+
+- 🔌 **MCP Protocol Support** - Native SSE/HTTP transport for seamless integration
+- 🔐 **Optional Bearer Auth** - Secure your server with API key authentication (multiple keys supported)
+- 🌐 **Proxy Mode** - Distributed execution with credential isolation
+- 🔄 **Auto-retry & Timeouts** - Robust error handling for production environments
+- 📊 **Health Checks** - Built-in monitoring endpoints
+
+### 🎯 Quick Start
+
+```bash
+# Navigate to MCP server directory
+cd mcp-server
+
+# Copy and configure environment
+cp .env.example .env
+# Edit .env with your tokens and LLM config
+
+# Start the server
+npm start
+```
+
+Server runs on `http://127.0.0.1:8000` by default.
+
+### 🔒 Authentication (Optional)
+
+Enable bearer token authentication for production:
+
+```bash
+# Set multiple API keys (comma-separated)
+AUTH_BEARER_KEYS=secret_key_1,secret_key_2,secret_key_3
+npm start
+```
+
+Clients must include the auth header:
+```bash
+Authorization: Bearer secret_key_1
+```
+
+### 🏗️ Proxy Mode
+
+Deploy with credential isolation:
+
+```bash
+# Proxy server (no credentials needed)
+PROXY_MODE=1
+SLAVE_CODES=worker_secret_1,worker_secret_2
+npm start
+
+# Worker instances (with credentials)
+PROXY_SLAVE=1
+SLAVE_CODE=worker_secret_1
+PROXY_SERVER_URL=ws://proxy:8001
+GITLAB_TOKEN=xxx
+npm start
+```
+
+See [`mcp-server/PROXY-MODE.md`](mcp-server/PROXY-MODE.md) for detailed setup.
+
+### 📖 MCP Server Documentation
+
+- 📘 [Quick Start Guide](mcp-server/QUICKSTART.md)
+- 📗 [Complete Documentation](mcp-server/README.md)
+- 🔧 [Troubleshooting](mcp-server/TROUBLESHOOTING.md)
+- 🐳 [Docker Deployment](mcp-server/DOCKER.md)
+- 🌐 [Proxy Mode Setup](mcp-server/PROXY-MODE.md)
+
+---
+
 ## Setup
 
 1. Install dependencies:
