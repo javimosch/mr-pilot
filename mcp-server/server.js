@@ -19,6 +19,9 @@ const HOST = process.env.MCP_SERVER_HOST || '127.0.0.1';
 const MCP_PROTOCOL_VERSION = '2025-06-18';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
+// Auth configuration
+const AUTH_BEARER_KEYS = process.env.AUTH_BEARER_KEYS ? process.env.AUTH_BEARER_KEYS.split(',').map(k => k.trim()) : [];
+
 // Proxy mode configuration
 const PROXY_MODE = process.env.PROXY_MODE === '1';
 const SLAVE_CODES = process.env.SLAVE_CODES ? process.env.SLAVE_CODES.split(',').map(c => c.trim()) : [];
@@ -42,6 +45,28 @@ const pendingProxyRequests = new Map();
 
 // Slave mode state
 let slaveWsClient = null;
+
+/**
+ * Verify bearer token authentication
+ */
+function verifyBearerAuth(req) {
+  if (AUTH_BEARER_KEYS.length === 0) {
+    return true;
+  }
+
+  const authHeader = req.headers['authorization'];
+  if (!authHeader) {
+    return false;
+  }
+
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  if (!match) {
+    return false;
+  }
+
+  const token = match[1];
+  return AUTH_BEARER_KEYS.includes(token);
+}
 
 /**
  * Logging utilities with timestamps
@@ -716,12 +741,39 @@ function handleDelete(req, res) {
  * Main HTTP request handler
  */
 function handleRequest(req, res) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
   // Use WHATWG URL API instead of deprecated url.parse()
   const requestUrl = new URL(req.url, `http://${req.headers.host || `${HOST}:${PORT}`}`);
   const method = req.method;
   const pathname = requestUrl.pathname;
 
   log(`${method} ${pathname}`);
+
+  // Verify authentication (except for health check)
+  if (pathname !== '/health' && !verifyBearerAuth(req)) {
+    log('Authentication failed - invalid or missing bearer token');
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      jsonrpc: '2.0',
+      error: {
+        code: -32001,
+        message: 'Unauthorized - invalid or missing bearer token'
+      },
+      id: null
+    }));
+    return;
+  }
 
   // Log protocol version if present (but don't enforce it)
   // Some MCP clients don't send this header
@@ -964,6 +1016,7 @@ server.listen(PORT, HOST, () => {
   log(`Listening on http://${HOST}:${PORT}`);
   log(`Protocol Version: ${MCP_PROTOCOL_VERSION}`);
   log(`Environment: ${NODE_ENV}`);
+  log(`Authentication: ${AUTH_BEARER_KEYS.length > 0 ? `Enabled (${AUTH_BEARER_KEYS.length} keys)` : 'Disabled'}`);
   
   if (PROXY_MODE) {
     log(`Mode: PROXY SERVER`);
@@ -982,6 +1035,7 @@ server.listen(PORT, HOST, () => {
   
   if (!PROXY_SLAVE) {
     log('Environment variables required by mr-pilot:');
+    log('  - AUTH_BEARER_KEYS (optional, comma-separated API keys for bearer auth)');
     log('  - GITLAB_TOKEN (for GitLab MRs)');
     log('  - GITLAB_API (GitLab API URL)');
     log('  - GITLAB_DEFAULT_PROJECT (optional default project)');
