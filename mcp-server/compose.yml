@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  mcp-server:
+    build:
+      context: ..
+      dockerfile: mcp-server/Dockerfile
+    container_name: mr-pilot-mcp-server
+    image: javimosch/mr-pilot-mcp-server:latest
+    ports:
+      - "8000:8000"
+    environment:
+      # Server Configuration
+      - NODE_ENV=production
+      - MCP_SERVER_PORT=8000
+      - MCP_SERVER_HOST=0.0.0.0
+      
+      # GitLab Configuration
+      - GITLAB_TOKEN=${GITLAB_TOKEN}
+      - GITLAB_API=${GITLAB_API:-https://gitlab.com/api/v4}
+      - GITLAB_DEFAULT_PROJECT=${GITLAB_DEFAULT_PROJECT:-}
+      
+      # GitHub Configuration
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_DEFAULT_REPO=${GITHUB_DEFAULT_REPO:-}
+      
+      # LLM Configuration
+      - LLM_PROVIDER=${LLM_PROVIDER:-openrouter}
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_MODEL=${LLM_MODEL:-openai/gpt-oss-120b:exacto}
+      - LLM_API_URL=${LLM_API_URL:-}
+      
+      # General Configuration
+      - MAX_DIFF_CHARS=${MAX_DIFF_CHARS:-50000}
+    
+    # Use .env file for environment variables
+    env_file:
+      - .env
+    
+    restart: unless-stopped
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    
+    # Network configuration
+    networks:
+      - mcp-network
+
+networks:
+  mcp-network:
+    driver: bridge
+
