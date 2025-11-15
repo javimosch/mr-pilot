@@ -26,8 +26,11 @@ RUN npm install -g . && \
 WORKDIR /app
 
 # Copy MCP server files
-COPY mcp-server/package.json ./
+COPY mcp-server/package.json mcp-server/package-lock.json* ./
 COPY mcp-server/server.js ./
+
+# Install MCP server dependencies
+RUN npm ci --only=production
 
 # Set production environment
 ENV NODE_ENV=production
