@@ -7,7 +7,9 @@
  */
 
 // Load environment variables from .env file
-require('dotenv').config();
+require('dotenv').config({
+  path: process.env.ENV_FILE || '.env'
+});
 
 const http = require('http');
 const { EventEmitter } = require('events');
@@ -447,7 +449,7 @@ async function dispatchMethod(method, params, id) {
     log(`[PROXY] Forwarding request to slave: ${method} (id: ${id})`);
     
     return new Promise((resolve, reject) => {
-      const requestId = id || crypto.randomUUID();
+      const requestId = (id === undefined || id === null) ? crypto.randomUUID() : id;
       const request = {
         jsonrpc: '2.0',
         method,
@@ -926,7 +928,7 @@ function initProxyServer() {
         }
 
         // Handle responses from slave
-        if (message.jsonrpc === '2.0' && message.id) {
+        if (message.jsonrpc === '2.0' && (message.id !== undefined && message.id !== null)) {
           log(`[PROXY] Received response from slave for request id: ${message.id}`);
           
           const pendingRequest = pendingProxyRequests.get(message.id);
