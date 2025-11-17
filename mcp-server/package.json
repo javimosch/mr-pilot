@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "npx nodemon server.js",
-    "test:proxy": "node test-proxy.js"
+    "test:proxy": "node test-proxy.js",
+    "test:connectivity": "node test-connectivity.js"
   },
   "keywords": [
     "mcp",
@@ -24,6 +25,7 @@
     "node": ">=14.0.0"
   },
   "dependencies": {
+    "dotenv": "^16.6.1",
     "ws": "^8.18.3"
   }
 }

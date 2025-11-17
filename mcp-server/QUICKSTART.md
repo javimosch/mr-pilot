@@ -170,3 +170,60 @@ If you encounter issues:
 3. Review [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 4. File an issue with logs and configuration
 
+
+## Testing Connectivity
+
+Use the connectivity test script to verify your MCP server is accessible:
+
+### Basic Usage
+
+```bash
+# Test without authentication
+npm run test:connectivity http://localhost:8000
+
+# Test with bearer token
+npm run test:connectivity https://mcp.example.com your_token_here
+
+# Test with "Bearer" prefix
+npm run test:connectivity https://mcp.example.com "Bearer your_token_here"
+```
+
+### Direct Usage
+
+```bash
+node test-connectivity.js <url> [bearer-token]
+```
+
+### What It Tests
+
+1. **Health Check** - Verifies server is responding and returns status
+2. **MCP Initialize** - Tests protocol initialization
+3. **Tools List** - Retrieves available tools
+
+### Example Output
+
+```
+════════════════════════════════════════════════════════════
+  🚀 MCP Server Connectivity Test
+════════════════════════════════════════════════════════════
+
+ℹ️ Target URL: https://mcp.example.com
+🔐 Authentication: Enabled
+
+════════════════════════════════════════════════════════════
+  �� Test 1: Health Check
+════════════════════════════════════════════════════════════
+✅ Health Check: OK
+⏱️ Response Time: 169ms
+ℹ️ Server: mr-pilot-mcp-server
+ℹ️ Version: 1.0.0
+ℹ️ Protocol: 2025-06-18
+ℹ️ Active Sessions: 2
+
+✅ Overall Result: ALL TESTS PASSED
+```
+
+### Exit Codes
+
+- `0` - All tests passed
+- `1` - One or more tests failed
