@@ -44,10 +44,19 @@ AUTH_BEARER_KEYS=secret_key_1,secret_key_2,secret_key_3
 npm start
 ```
 
-Clients must include the auth header:
+**Authentication Methods** (tries Bearer first, then custom header):
+
 ```bash
+# Method 1: Bearer token (standard)
 Authorization: Bearer secret_key_1
+
+# Method 2: Custom header (alternative)
+AUTH_CUSTOM_HEADER=x-api-key
+# Then clients send:
+x-api-key: secret_key_1
 ```
+
+Common custom header names: `x-api-key`, `x-auth-token`, `api-key`
 
 ### 🏗️ Proxy Mode
 
