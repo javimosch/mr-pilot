@@ -444,10 +444,35 @@ const tools = {
 async function dispatchMethod(method, params, id) {
   log(`Dispatching method: ${method}`);
 
+  // Handle notifications/cancelled in proxy mode
+  if (PROXY_MODE && method === 'notifications/cancelled' && params && params.requestId !== undefined) {
+    const cancelledRequestId = params.requestId;
+    log(`[PROXY] Client cancelled request ${cancelledRequestId}`);
+
+    // Clean up the pending request
+    if (pendingProxyRequests.has(cancelledRequestId)) {
+      const pending = pendingProxyRequests.get(cancelledRequestId);
+      pendingProxyRequests.delete(cancelledRequestId);
+
+      // Reject the pending promise with a cancellation error
+      pending.reject(new Error(`Request ${cancelledRequestId} cancelled by client`));
+      log(`[PROXY] Cleaned up cancelled request ${cancelledRequestId}`);
+    } else {
+      log(`[PROXY] Request ${cancelledRequestId} not found in pending requests (may have already completed)`);
+    }
+
+    // Don't forward cancellation to slave, just acknowledge
+    return {
+      jsonrpc: '2.0',
+      result: null,
+      id
+    };
+  }
+
   // If in PROXY_MODE and a slave is connected, forward the request
   if (PROXY_MODE && connectedSlaveWs && connectedSlaveWs.readyState === WebSocket.OPEN) {
     log(`[PROXY] Forwarding request to slave: ${method} (id: ${id})`);
-    
+
     return new Promise((resolve, reject) => {
       const requestId = (id === undefined || id === null) ? crypto.randomUUID() : id;
       const request = {
