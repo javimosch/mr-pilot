@@ -35,10 +35,19 @@ This guide explains how to run the MCP server for mr-pilot using Docker and Dock
 The Docker setup uses a multi-stage build:
 
 1. **Stage 1 (mr-pilot-builder)**: Builds mr-pilot from source
-2. **Stage 2 (mcp-server)**: Installs mr-pilot globally and runs the MCP server
+   - Copies mr-pilot source files (package.json, src/, bin/)
+   - Installs dependencies with `npm ci --only=production`
+   - Installs mr-pilot globally with `npm install -g .`
+
+2. **Stage 2 (mcp-server)**: Copies mr-pilot and runs the MCP server
+   - Copies entire mr-pilot directory from builder stage to `/opt/mr-pilot`
+   - Creates symlink from `/opt/mr-pilot/bin/mr-pilot.js` to `/usr/local/bin/mr-pilot`
+   - Copies MCP server files and installs dependencies
+   - Sets `NODE_ENV=production` for production mode
 
 This ensures:
-- mr-pilot is available as a global binary (`NODE_ENV=production`)
+- mr-pilot CLI is available as a global binary (`NODE_ENV=production`)
+- Relative requires in mr-pilot work correctly (bin/mr-pilot.js → ../src/index.js)
 - Minimal final image size
 - Production-ready configuration
 

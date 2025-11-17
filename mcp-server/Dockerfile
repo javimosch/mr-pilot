@@ -5,22 +5,24 @@ FROM node:20-alpine AS mr-pilot-builder
 
 WORKDIR /build
 
-# Copy mr-pilot package files
+# Copy mr-pilot package files from root
 COPY package.json package-lock.json ./
 COPY src ./src
 COPY bin ./bin
 
-# Install dependencies and prepare for production
-RUN npm ci --only=production
+# Install dependencies
+RUN npm ci --only=production && \
+    npm install -g .
 
 # Stage 2: MCP Server
 FROM node:20-alpine
 
-# Install mr-pilot globally from the build stage
-WORKDIR /tmp/mr-pilot
-COPY --from=mr-pilot-builder /build ./
-RUN npm install -g . && \
-    rm -rf /tmp/mr-pilot
+# Copy mr-pilot from builder stage (entire directory structure)
+COPY --from=mr-pilot-builder /build /opt/mr-pilot
+
+# Create symlink for mr-pilot binary
+RUN ln -s /opt/mr-pilot/bin/mr-pilot.js /usr/local/bin/mr-pilot && \
+    chmod +x /opt/mr-pilot/bin/mr-pilot.js
 
 # Set up MCP server
 WORKDIR /app
