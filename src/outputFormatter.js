@@ -54,6 +54,22 @@ function printResult(jsonString, acceptanceCriteria = null) {
     console.log(`Goal Status: ${result.goal_status.toUpperCase()}`);
     console.log(`Quality Score: ${result.score}/100`);
 
+    if (result.scope_analysis) {
+      console.log();
+      console.log('📋 Scope Analysis:');
+      if (result.scope_analysis.addressed && result.scope_analysis.addressed.length > 0) {
+        console.log('   Addressed:');
+        result.scope_analysis.addressed.forEach(item => console.log(`   ✓ ${item}`));
+      }
+      if (result.scope_analysis.not_addressed && result.scope_analysis.not_addressed.length > 0) {
+        console.log('   Not Addressed:');
+        result.scope_analysis.not_addressed.forEach(item => console.log(`   ✗ ${item}`));
+      }
+      if (result.scope_analysis.summary) {
+        console.log(`   Summary: ${result.scope_analysis.summary}`);
+      }
+    }
+
     if (acceptanceCriteria) {
       console.log(`Acceptance Criteria: ${acceptanceCriteria}`);
     }
@@ -91,6 +107,23 @@ function formatCommentBody(result, acceptanceCriteria = null) {
   
   comment += `**Goal Status:** ${result.goal_status.toUpperCase()}\n`;
   comment += `**Quality Score:** ${result.score}/100\n`;
+
+  if (result.scope_analysis) {
+    comment += '\n### 📋 Scope Analysis\n\n';
+    if (result.scope_analysis.addressed && result.scope_analysis.addressed.length > 0) {
+      comment += '**Addressed:**\n';
+      result.scope_analysis.addressed.forEach(item => comment += `- ✓ ${item}\n`);
+      comment += '\n';
+    }
+    if (result.scope_analysis.not_addressed && result.scope_analysis.not_addressed.length > 0) {
+      comment += '**Not Addressed:**\n';
+      result.scope_analysis.not_addressed.forEach(item => comment += `- ✗ ${item}\n`);
+      comment += '\n';
+    }
+    if (result.scope_analysis.summary) {
+      comment += `**Summary:** ${result.scope_analysis.summary}\n\n`;
+    }
+  }
   
   if (acceptanceCriteria) {
     comment += `**Acceptance Criteria:** ${acceptanceCriteria}\n`;
