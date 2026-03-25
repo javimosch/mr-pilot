@@ -156,6 +156,22 @@ async function getDiffs(prUrl, projectArg = null, maxDiffChars = null) {
 
     const files = filesResponse.data;
 
+    // Fetch commits
+    let commits = [];
+    try {
+      const commitsResponse = await axios.get(
+        `${apiBase}/repos/${owner}/${repo}/pulls/${prNumber}/commits`,
+        { headers, timeout: 30000 }
+      );
+      commits = commitsResponse.data.map(c => ({
+        message: c.commit.message,
+        author: c.commit.author.name,
+        date: c.commit.author.date,
+      }));
+    } catch (e) {
+      console.log('  (could not fetch commits)');
+    }
+
     // Format diffs
     let diffsText = '';
     let truncatedFiles = 0;
@@ -207,6 +223,7 @@ async function getDiffs(prUrl, projectArg = null, maxDiffChars = null) {
       targetBranch: pr.base.ref,
       changedFiles: files.length,
       diffs: diffsText,
+      commits,
       diffStats: {
         originalLength,
         truncatedLength: wasTruncated ? MAX_DIFF_LENGTH : originalLength,
