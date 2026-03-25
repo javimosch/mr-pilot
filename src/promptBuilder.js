@@ -1,4 +1,4 @@
-function buildPrompt({ title, description, sourceBranch, targetBranch, changedFiles, diffs, ticketScope, guidelines }) {
+function buildPrompt({ title, description, sourceBranch, targetBranch, changedFiles, diffs, ticketScope, guidelines, commits }) {
   let prompt = `You are a senior software code reviewer conducting a thorough merge request review.
 
 **Merge Request Context:**
@@ -18,6 +18,14 @@ ${ticketScope}
 ONLY review changes that are directly related to the ticket requirements above. 
 This MR may contain additional commits from other tickets due to branch integration.
 Ignore changes that are clearly unrelated to the stated requirements.
+`;
+  }
+
+  if (commits && commits.length > 0) {
+    const commitList = commits.map(c => `- ${c.message}`).join('\n');
+    prompt += `
+**Commits in this MR:**
+${commitList}
 `;
   }
 
@@ -46,10 +54,11 @@ ${guidelines}
   prompt += `
 **Your Task:**
 Review the code changes below and provide a structured analysis covering:
-1. Whether the implementation meets the stated goal/requirements${ticketScope ? ' (as defined in the specification above)' : ''}
-2. Any potential bugs, errors, or implementation issues
-3. Code quality concerns (if any)
-4. An overall quality score from 0-100
+1. Scope Analysis: Analyze commits and code changes to determine what features/requirements are being implemented. If ticketScope is provided, compare against it. If not, infer from commit messages and diff patterns.
+2. Whether the implementation meets the stated goal/requirements${ticketScope ? ' (as defined in the specification above)' : ''}
+3. Any potential bugs, errors, or implementation issues
+4. Code quality concerns (if any)
+5. An overall quality score from 0-100
 
 **Critical Review Standards:**
 You are conducting a THOROUGH code review. Be critical and detailed:
@@ -76,6 +85,11 @@ ${isTruncated ? '⚠️ **Note:** The diff was truncated due to size. You are se
 **Important:** You must respond with ONLY valid JSON in this exact format:
 {
   "goal_status": "met" | "partially_met" | "unmet",
+  "scope_analysis": {
+    "addressed": ["list of requirements/features addressed by the code changes"],
+    "not_addressed": ["list of requirements/features clearly not addressed"],
+    "summary": "brief explanation of what the changes implement"
+  },
   "errors": ["list of specific issues found"],
   "remarks": "brief overall assessment and key observations",
   "score": <number between 0-100>
