@@ -92,6 +92,22 @@ async function getDiffs(
 
     const mr = response.data;
 
+    // Fetch commits
+    let commits = [];
+    try {
+      const commitsResponse = await axios.get(
+        `${apiBase}/projects/${projectId}/merge_requests/${mrIid}/commits`,
+        { headers },
+      );
+      commits = commitsResponse.data.map(c => ({
+        message: c.message,
+        author: c.author_name,
+        date: c.created_at,
+      }));
+    } catch (e) {
+      console.log('  (could not fetch commits)');
+    }
+
     // Format diffs
     let diffsText = "";
     let truncatedFiles = 0;
@@ -144,6 +160,7 @@ async function getDiffs(
       targetBranch: mr.target_branch,
       changedFiles: mr.changes?.length || 0,
       diffs: diffsText,
+      commits,
       diffStats: {
         originalLength,
         truncatedLength: wasTruncated ? MAX_DIFF_LENGTH : originalLength,
