@@ -10,6 +10,18 @@ async function main() {
   try {
     // Parse command line arguments
     const args = process.argv.slice(2);
+    
+    // Find env-file argument (must be parsed before dotenv config)
+    const envFileIndex = args.findIndex(arg => arg === '--env-file');
+    if (envFileIndex !== -1 && args[envFileIndex + 1]) {
+      const envFilePath = args[envFileIndex + 1];
+      if (fs.existsSync(envFilePath)) {
+        require('dotenv').config({ path: envFilePath });
+      } else {
+        throw new Error(`Env file not found: ${envFilePath}`);
+      }
+    }
+    
     const mrUrlOrId = args.find(arg => !arg.startsWith('--') && !arg.startsWith('-'));
     const shouldComment = args.includes('--comment') || args.includes('-c');
     const debugMode = args.includes('--debug') || args.includes('-d');
@@ -70,6 +82,7 @@ async function main() {
       console.error('Usage: node src/index.js <mr_url_or_id> [options]');
       console.error('');
       console.error('Options:');
+      console.error('  --env-file <path>               Path to .env file with API tokens');
       console.error('  --comment, -c                    Post review as comment on the MR');
       console.error('  --input-file, -i <path>          Path to ticket/requirement specification file');
       console.error('  --guidelines-file, -g <path>     Path to project guidelines file (reduces false positives)');
